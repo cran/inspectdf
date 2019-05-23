@@ -12,8 +12,8 @@ inspect_imb(df1, df2 = NULL, show_plot = FALSE)
 \item{df2}{An optional second data frame for comparing columnwise imbalance.
 Defaults to \code{NULL}.}
 
-\item{show_plot}{Logical argument determining whether plot is returned
-in addition to tibble output.  Default is \code{FALSE}.}
+\item{show_plot}{(Deprecated) Logical flag indicating whether a plot should be shown.
+Superseded by the function \code{show_plot()} and will be dropped in a future version.}
 }
 \value{
 A tibble summarising and comparing the imbalance for each non-numeric column 
@@ -54,8 +54,6 @@ The resulting tibble has columns
 data("starwars", package = "dplyr")
 # get tibble of most common levels
 inspect_imb(starwars)
-# get most common levels and show as barplot
-inspect_imb(starwars, show_plot = TRUE)
-# compare memory usage 
+# compare imbalance 
 inspect_imb(starwars, starwars[1:10, -3])
 }

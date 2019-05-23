@@ -3,8 +3,8 @@
 #' @param df1 A dataframe
 #' @param df2 An optional second data frame for comparing categorical levels.  
 #' Defaults to \code{NULL}.
-#' @param show_plot Logical argument determining whether plot is returned
-#' in addition to tibble output.  Default is \code{FALSE}.
+#' @param show_plot (Deprecated) Logical flag indicating whether a plot should be shown.  
+#' Superseded by the function \code{show_plot()} and will be dropped in a future version.
 #' @return A tibble summarising and comparing the categorical features 
 #' in one or a pair of data frames.
 #' @details When only \code{df1} is specified, a tibble is returned which 
@@ -23,11 +23,9 @@
 #' exact test are performed as part of the comparison.
 #' \itemize{
 #'   \item \code{col_name} character vector containing column names of \code{df1} and \code{df2}.
-#'   \item{psi} numeric column containing the 
-#'   \href{https://www.quora.com/What-is-population-stability-index}{population stability index}.  
-#'   This measures the difference in the distribution of two categorical features.  Conventionally, 
-#'   values exceeding 0.25 indicate strong evidence of a change, with values below 0.25 and 0.1 
-#'   representing moderate and low evidence of a change.
+#'   \item{jsd} numeric column containing the Jensen-Shannon divergence.  This measures the 
+#'   difference in distribution of a pair of categorical features.  Values near to 0 indicate
+#'   agreement of the distributions, while 1 indicates disagreement.
 #'   \item{fisher_p} p-value corresponding to Fisher's exact test.  A small p indicates 
 #'   evidence that the the two sets of relative frequencies are actually different.
 #'   \item \code{lvls_1}, \code{lvls_2} relative frequency of levels in each of \code{df1} and \code{df2}.
@@ -36,8 +34,6 @@
 #' @examples
 #' data("starwars", package = "dplyr")
 #' inspect_cat(starwars)
-#' # return a visualisation too
-#' inspect_cat(starwars, show_plot = TRUE)
 #' # compare the levels in two data frames
 #' inspect_cat(starwars, starwars[1:20, ])
 #' @importFrom tibble as_tibble
@@ -55,6 +51,8 @@
 #' @importFrom dplyr slice
 #' @importFrom dplyr ungroup
 #' @importFrom magrittr %>%
+#' @importFrom progress progress_bar
+#' @importFrom Rcpp compileAttributes
 
 inspect_cat <- function(df1, df2 = NULL, show_plot = FALSE){
   
@@ -73,64 +71,66 @@ inspect_cat <- function(df1, df2 = NULL, show_plot = FALSE){
     # calculate association if categorical columns exist
     if(ncol(df_cat) > 0){
       # get the levels for each category
-      levels_list <- lapply(df_cat, fast_table, show_na = TRUE)
+      names_cat <- colnames(df_cat)
+      n_cols <- ncol(df_cat)
+      levels_list <- vector("list", length = length(df_cat))
+      # loop over columns and tabulte frequencies
+      pb <- start_progress(prefix = " Column", total = n_cols)
+      for(i in 1:n_cols){
+        update_progress(bar = pb, iter = i, total = n_cols, what = names_cat[i])
+        levels_list[[i]] <- fast_table(df_cat[[i]], show_na = TRUE, show_cnt = TRUE)
+      }
+      names(levels_list) <- names(df_cat)
       # get the most common level
       levels_top  <- lapply(levels_list, function(M) M[1, ]) %>% 
         do.call("rbind", .) %>% 
-        mutate(col_name = colnames(df_cat))
+        mutate(col_name = names_cat) %>%
+        select(-cnt)
       # get the unique levels
       levels_unique <- suppressWarnings(lapply(levels_list, nrow) %>% 
         do.call("rbind", .) %>% 
         as_tibble(rownames = "col_name"))
       # combine the above tables
-      levels_df <- levels_unique %>% 
+      out <- levels_unique %>% 
         left_join(levels_top, by = "col_name") %>% 
         mutate(prop = prop * 100) %>%
         rename(cnt = V1, common = value, common_pcnt = prop)
-      # add the list of levels as a final column
-      levels_df$levels <- levels_list
+      out$levels <- levels_list
       # sort by alphabetical order & filter to max number of rows
-      levels_df <- levels_df %>% 
+      out <- out %>% 
         arrange(col_name)
       # add names to the list
-      names(levels_df$levels) <- levels_df$col_name
-      # if plot is requested
-      if(show_plot){
-        # plot the categories using stacked bars
-        plt <- plot_cat(levels_df, df_names)
-        # return the plot
-        print(plt) 
-      }
-      # return df
-      return(levels_df)
+      names(out$levels) <- out$col_name
+      
+      # attach attributes required for plotting
+      attr(out, "type")     <- list("cat", 1)
+      attr(out, "df_names") <- df_names
     } else {
-        return(tibble(col_name = character(), cnt = integer(), 
-                      common = character(), common_pcnt = numeric(), 
-                      levels = list()))
+      out <- tibble(col_name = character(), cnt = integer(), 
+                    common = character(), common_pcnt = numeric(), 
+                    levels = list())
     }
   } else {
     # levels for df1
-    s1 <- inspect_cat(df1, show_plot = FALSE)  %>% 
+    s1 <- inspect_cat(df1)  %>% 
       select(-contains("common"), -cnt)
     # levels for df2
-    s2 <- inspect_cat(df2, show_plot = FALSE) %>% 
+    s2 <- inspect_cat(df2) %>% 
       select(-contains("common"), -cnt)
     # combine and clean up levels
-    levels_df <- full_join(s1, s2, by = "col_name") %>% 
-      mutate(psi = psi(levels.x, levels.y)) %>%
-      mutate(fisher_p = fisher(levels.x, levels.y, n_1 = nrow(df1), n_2 = nrow(df2))) %>%
-        select(col_name, psi, fisher_p, levels.x, levels.y)
-    colnames(levels_df)[4:5] <- paste0("lvls_", 1:2)
+    out <- full_join(s1, s2, by = "col_name") %>% 
+      mutate(jsd = js_divergence_vec(levels.x, levels.y)) %>%
+      mutate(fisher_p = fisher(levels.x, levels.y, n_1 = nrow(df1), 
+                               n_2 = nrow(df2))) %>%
+      select(col_name, jsd, fisher_p, lvls_1 = levels.x, lvls_2 = levels.y)
+
     # ensure the list names are retained
-    names(levels_df[[4]]) <- names(levels_df[[5]]) <- as.character(levels_df$col_name)
-    # if plot is requested
-    if(show_plot){
-      # plot the categories using stacked bars
-      plt <- plot_cat(levels_df, df_names)
-      # return the plot
-      print(plt)
-    }
-    # return the comparison table
-    return(levels_df)
+    names(out[[4]]) <- names(out[[5]]) <- as.character(out$col_name)
+    
+    # attach attributes required for plotting
+    attr(out, "type")     <- list("cat", 2)
+    attr(out, "df_names") <- df_names
   }
+  if(show_plot) plot_deprecated(out)
+  return(out)
 }

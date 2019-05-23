@@ -7,6 +7,7 @@
 #' @importFrom dplyr mutate_all
 #' @importFrom dplyr select_
 #' @importFrom magrittr %>%
+#' @importFrom progress progress_bar
 #' @importFrom tibble as_tibble
 #' @importFrom tibble tibble
 #' @importFrom stats pnorm
@@ -20,17 +21,22 @@ cor_test <- function(cor_1, cor_2, n_1, n_2){
   (2 * pnorm(-abs(zstat)))
 }
 
+
 # univariate correlation tests
-cor_test_1 <- function(df_input, alpha = 0.05){
+cor_test_1 <- function(df_input, df_name, with_col, alpha = 0.05){
   # every combination of variables
-  c_nms <- colnames(df_input)
-  c_cmbs <- expand.grid(col_1 =  c_nms, col_2 =  c_nms) %>%
+  c_nms  <- c_nms_1 <- c_nms_2 <- colnames(df_input)
+  c_nms_1 <- if(is.null(with_col)) c_nms_1 else with_col
+  c_cmbs <- expand.grid(col_1 = factor(c_nms_1, levels = c_nms_2), col_2 =  c_nms_2) %>%
     filter(as.numeric(col_1) > as.numeric(col_2), !col_1 == col_2) %>%
     mutate_all(as.character) %>% 
     mutate(pair = paste(col_1, col_2, sep = " & "))
   # loop over rows and calculate correlation, p.value and cint
-  out_cors <- vector("list", length = nrow(c_cmbs))
-  for(i in 1:nrow(c_cmbs)){
+  out_cors  <- vector("list", length = nrow(c_cmbs))
+  total_its <- nrow(c_cmbs)
+  pb <- start_progress(prefix = " Column pair", total = total_its)
+  for(i in 1:total_its){
+    update_progress(bar = pb, iter = i, total = total_its, what = c_cmbs$pair[i])
     c_df   <- df_input %>% select_(c_cmbs$col_1[i], c_cmbs$col_2[i])
     c_test <- try(cor.test(c_df[, 1, drop = TRUE], 
                            c_df[, 2, drop = T], 
@@ -47,7 +53,6 @@ cor_test_1 <- function(df_input, alpha = 0.05){
                               lower = NA,
                               upper = NA) 
     }
-
   }
   # combine into a single tibble
   cor_out <- bind_cols(c_cmbs, bind_rows(out_cors)) %>% 

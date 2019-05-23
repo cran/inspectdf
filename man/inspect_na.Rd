@@ -4,7 +4,7 @@
 \alias{inspect_na}
 \title{Summarise and compare the rate of missingness in one or two dataframes.}
 \usage{
-inspect_na(df1, df2 = NULL, show_plot = FALSE, alpha = 0.05)
+inspect_na(df1, df2 = NULL, show_plot = FALSE)
 }
 \arguments{
 \item{df1}{A data frame}
@@ -12,10 +12,8 @@ inspect_na(df1, df2 = NULL, show_plot = FALSE, alpha = 0.05)
 \item{df2}{An optional second data frame for making columnwise comparison of missingness.
 Defaults to \code{NULL}.}
 
-\item{show_plot}{Logical determining whether to return a plot in addition to tibble.
-Default is \code{FALSE}.}
-
-\item{alpha}{Alpha level for performing significance tests.  Defaults to 0.05.}
+\item{show_plot}{(Deprecated) Logical flag indicating whether a plot should be shown.
+Superseded by the function \code{show_plot()} and will be dropped in a future version.}
 }
 \value{
 A tibble summarising the count and percentage of columnwise missingness 
@@ -52,8 +50,6 @@ of missingness is the same across the same column in either dataframe.
 data("starwars", package = "dplyr")
 # inspect missingness in starwars data
 inspect_na(starwars)
-# show the result as a barplot
-inspect_na(starwars, show_plot = TRUE)
 # compare two dataframes
 inspect_na(starwars, starwars[1:30, ])
 }

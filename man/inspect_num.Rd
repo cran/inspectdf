@@ -4,8 +4,8 @@
 \alias{inspect_num}
 \title{Summarise and compare the numeric variables within one or two dataframes}
 \usage{
-inspect_num(df1, df2 = NULL, show_plot = F, breaks = 20,
-  plot_layout = NULL, breakseq = NULL)
+inspect_num(df1, df2 = NULL, breaks = 20, breakseq = NULL,
+  show_plot = FALSE)
 }
 \arguments{
 \item{df1}{A data frame}
@@ -13,19 +13,15 @@ inspect_num(df1, df2 = NULL, show_plot = F, breaks = 20,
 \item{df2}{An optional second data frame for comparing categorical levels.
 Defaults to \code{NULL}.}
 
-\item{show_plot}{Logical determining whether to show a plot in addition 
-to tibble output.  Default is \code{FALSE}.}
-
 \item{breaks}{Optional argument determining how breaks are constructed for 
-histograms when comparing numeric data frame features.  This is passed to 
-\code{hist(..., breaks)}.  See \code{?hist} for more details.}
-
-\item{plot_layout}{Vector specifying the number of rows and columns 
-in the plotting grid.  For example, 3 rows and 2 columns would be specified as 
-\code{plot_layout = c(3, 2)}.}
+histograms when comparing numeric data frame features.  This is passed to}
 
 \item{breakseq}{For internal use only.  Argument that accepts a pre-specified set of 
 break points, default is \code{NULL}.}
+
+\item{show_plot}{(Deprecated) Logical flag indicating whether a plot should be shown.
+Superseded by the function \code{show_plot()} and will be dropped in a future version.
+\code{hist(..., breaks)}.  See \code{?hist} for more details.}
 }
 \value{
 A \code{tibble} containing statistical summaries of the numeric 
@@ -53,13 +49,11 @@ If both \code{df1} and \code{df2} are specified, the tibble has columns
   \item \code{hist_1}, \code{hist_2} list column for histograms of each of \code{df1} and \code{df2}.
   Where a column appears in both dataframe, the bins used for \code{df1} are reused to 
   calculate histograms for \code{df2}.
-  \item{psi} numeric column containing the 
-  \href{https://www.quora.com/What-is-population-stability-index}{population stability index}.  
-  This measures the change in distribution of two numeric features.  Conventionally, values
-  exceeding 0.25 indicate strong evidence of a change, with values below 0.25 and 0.1 
-  representing moderate and low evidence of a change.
+  \item{jsd} numeric column containing the Jensen-Shannon divergence.  This measures the 
+  difference in distribution of a pair of binned numeric features.  Values near to 0 indicate
+  agreement of the distributions, while 1 indicates disagreement.
   \item{fisher_p} p-value corresponding to Fisher's exact test.  A small p indicates 
-  evidence that the the two histograms are actually different.
+  evidence that the two histograms are actually different.
 }
 }
 \examples{
@@ -69,5 +63,5 @@ inspect_num(starwars)
 # with a visualisation too - try to limit number of bins
 inspect_num(starwars, breaks = 10)
 # compare two data frames
-inspect_num(starwars, starwars[-c(1:10), ], breaks = 10, show_plot = TRUE)
+inspect_num(starwars, starwars[-c(1:10), ], breaks = 10)
 }

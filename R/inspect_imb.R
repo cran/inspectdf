@@ -3,8 +3,8 @@
 #' @param df1 A data frame
 #' @param df2 An optional second data frame for comparing columnwise imbalance.  
 #' Defaults to \code{NULL}.  
-#' @param show_plot Logical argument determining whether plot is returned
-#' in addition to tibble output.  Default is \code{FALSE}.
+#' @param show_plot (Deprecated) Logical flag indicating whether a plot should be shown.  
+#' Superseded by the function \code{show_plot()} and will be dropped in a future version.
 #' @return  A tibble summarising and comparing the imbalance for each non-numeric column 
 #' in one or a pair of data frames.
 #' @details When a single data frame is specified, a tibble is returned which 
@@ -38,9 +38,7 @@
 #' data("starwars", package = "dplyr")
 #' # get tibble of most common levels
 #' inspect_imb(starwars)
-#' # get most common levels and show as barplot
-#' inspect_imb(starwars, show_plot = TRUE)
-#' # compare memory usage 
+#' # compare imbalance 
 #' inspect_imb(starwars, starwars[1:10, -3])
 #' @importFrom tibble tibble
 #' @importFrom dplyr arrange
@@ -64,43 +62,52 @@ inspect_imb <- function(df1, df2 = NULL, show_plot = FALSE){
   if(is.null(df2)){
     # pick out categorical columns
     df_cat <- df1 %>% select_if(function(v) is.character(v) | is.factor(v))
+    n_cols <- ncol(df_cat)
     # calculate imbalance if any columns available
-    if(ncol(df_cat) > 0){
+    if(n_cols > 0){
+      names_cat <- colnames(df_cat)
       # function to find the percentage of the most common value in a vector
-      freq_tabs      <- lapply(df_cat, fast_table, show_cnt = TRUE)
-      imb_cols       <- suppressWarnings(bind_rows(freq_tabs, .id = "col_name"))
+      levels_list <- vector("list", length = n_cols)
+      pb <- start_progress(prefix = " Column", total = n_cols)
+      for(i in 1:n_cols){
+        update_progress(bar = pb, iter = i, total = n_cols, what = names_cat[i])
+        full_tab <- fast_table(df_cat[[i]], show_cnt = TRUE)
+        levels_list[[i]] <- full_tab %>% slice(1)
+      }
+      # collapse highest imbalance into single dataframe
+      names(levels_list) <- names_cat
+      imb_cols  <- suppressWarnings(bind_rows(levels_list, .id = "col_name"))
 
+      # tidy up table output
       out <- imb_cols %>% 
-        group_by(col_name) %>%
-        arrange(desc(prop)) %>% 
-        slice(1) %>% ungroup %>%
         mutate(prop = 100 * prop) %>%
         arrange(desc(prop)) %>% 
         select(col_name, value, pcnt = prop, cnt)
-      # print plot if requested
-      if(show_plot) plot_imb_1(out, df_names = df_names)
-      # return dataframe of values
-      return(out)
+
+      # attach attributes required for plotting
+      attr(out, "type")     <- list("imb", 1)
+      attr(out, "df_names") <- df_names
     } else {
       # return empty dataframe if no categorical columns 
-      return(tibble(col_name = character(), 
+      out <- tibble(col_name = character(), 
                     value = character(), 
                     pcnt = numeric(), 
-                    cnt = integer()))
+                    cnt = integer())
     }
   } else {
     # summary of df1
-    s1 <- inspect_imb(df1, show_plot = F) %>% 
+    s1 <- inspect_imb(df1) %>% 
       rename(pcnt_1 = pcnt, cnt_1 = cnt)
     # summary of df2
-    s2 <- inspect_imb(df2, show_plot = F) %>% 
+    s2 <- inspect_imb(df2) %>% 
       rename(pcnt_2 = pcnt, cnt_2 = cnt)
     # left join summaries together
     out <- left_join(s1, s2, by = c("col_name", "value")) %>%
       mutate(p_value = prop_test_imb(., n_1 = nrow(df1), n_2 = nrow(df2)))
-    # print plot if requested
-    if(show_plot) plot_imb_2(out, df_names = df_names, alpha = 0.05)
-    # return combined data frame
-    return(out)
+    # attach attributes required for plotting
+    attr(out, "type")     <- list("imb", 2)
+    attr(out, "df_names") <- df_names
   }
+  if(show_plot) plot_deprecated(out)
+  return(out)
 }
