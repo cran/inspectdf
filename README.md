@@ -52,12 +52,13 @@ library(inspectdf)
 
 ## Illustrative data: `starwars`
 
-The examples below make use of the `starwars` data from the `dplyr`
-package
+The examples below make use of the `starwars` and `storms` data from the
+`dplyr` package
 
 ``` r
 # some example data
 data(starwars, package = "dplyr")
+data(storms, package = "dplyr")
 ```
 
 For illustrating comparisons of dataframes, use the `starwars` data and
@@ -178,19 +179,19 @@ inspect_mem(star_1, star_2)
     ## # A tibble: 13 x 5
     ##    col_name   size_1    size_2    pcnt_1 pcnt_2
     ##    <chr>      <chr>     <chr>      <dbl>  <dbl>
-    ##  1 films      10.94 Kb  11.85 Kb  33.8    41.8 
-    ##  2 starships  4.53 Kb   4.47 Kb   14.0    15.8 
-    ##  3 name       3.57 Kb   <NA>      11.0    NA   
-    ##  4 vehicles   3.23 Kb   3.45 Kb    9.98   12.2 
-    ##  5 homeworld  2.31 Kb   1.94 Kb    7.15    6.84
-    ##  6 skin_color 1.97 Kb   1.61 Kb    6.09    5.68
-    ##  7 species    1.93 Kb   1.48 Kb    5.97    5.24
-    ##  8 hair_color 1.06 Kb   968 bytes  3.29    3.34
-    ##  9 eye_color  1 Kb      1.05 Kb    3.09    3.69
-    ## 10 gender     680 bytes 680 bytes  2.05    2.34
-    ## 11 mass       448 bytes 448 bytes  1.35    1.54
-    ## 12 birth_year 448 bytes 448 bytes  1.35    1.54
-    ## 13 height     248 bytes <NA>       0.749  NA
+    ##  1 films      11.2 Kb   11.28 Kb  34.3    40.2 
+    ##  2 starships  4.08 Kb   4.19 Kb   12.5    14.9 
+    ##  3 name       3.57 Kb   <NA>      10.9    NA   
+    ##  4 vehicles   3.49 Kb   3.41 Kb   10.7    12.1 
+    ##  5 homeworld  2.48 Kb   2.01 Kb    7.61    7.15
+    ##  6 skin_color 2 Kb      2.01 Kb    6.13    7.15
+    ##  7 species    1.88 Kb   1.65 Kb    5.77    5.87
+    ##  8 eye_color  1.16 Kb   1.05 Kb    3.57    3.73
+    ##  9 hair_color 1 Kb      968 bytes  3.06    3.37
+    ## 10 gender     680 bytes 680 bytes  2.03    2.37
+    ## 11 mass       448 bytes 448 bytes  1.34    1.56
+    ## 12 birth_year 448 bytes 448 bytes  1.34    1.56
+    ## 13 height     248 bytes <NA>       0.742  NA
 
 ``` r
 inspect_mem(star_1, star_2) %>% show_plot()
@@ -251,13 +252,13 @@ inspect_na(star_1, star_2)
     ## # A tibble: 13 x 6
     ##    col_name   cnt_1 pcnt_1 cnt_2 pcnt_2 p_value
     ##    <chr>      <dbl>  <dbl> <dbl>  <dbl>   <dbl>
-    ##  1 birth_year    25     50    21     42   0.547
-    ##  2 mass          15     30    20     40   0.402
-    ##  3 hair_color     3      6     3      6   1    
-    ##  4 homeworld      3      6     8     16   0.201
-    ##  5 species        3      6     3      6   1    
-    ##  6 height         2      4    NA     NA  NA    
-    ##  7 gender         1      2     2      4   1    
+    ##  1 birth_year    25     50    25     50   1    
+    ##  2 mass          17     34    17     34   1.000
+    ##  3 homeworld      4      8     8     16   0.356
+    ##  4 height         2      4    NA     NA  NA    
+    ##  5 hair_color     2      4     5     10   0.433
+    ##  6 species        2      4     5     10   0.433
+    ##  7 gender         1      2     3      6   0.610
     ##  8 name           0      0    NA     NA  NA    
     ##  9 skin_color     0      0     0      0  NA    
     ## 10 eye_color      0      0     0      0  NA    
@@ -297,26 +298,35 @@ columns . The function combines the functionality of `cor()` and
 `cor.test()` in a more convenient wrapper.
 
 ``` r
-inspect_cor(starwars)
+inspect_cor(storms)
 ```
 
-    ## # A tibble: 3 x 6
-    ##   col_1      col_2    corr p_value  lower   upper
-    ##   <chr>      <chr>   <dbl>   <dbl>  <dbl>   <dbl>
-    ## 1 birth_year mass    0.478 0.00318  0.130  0.721 
-    ## 2 birth_year height -0.400 0.00789 -0.651 -0.0690
-    ## 3 mass       height  0.134 0.312   -0.163  0.409
+    ## # A tibble: 45 x 6
+    ##    col_1       col_2         corr  p_value  lower  upper
+    ##    <chr>       <chr>        <dbl>    <dbl>  <dbl>  <dbl>
+    ##  1 pressure    wind        -0.942 0.       -0.945 -0.940
+    ##  2 hu_diameter pressure    -0.842 0.       -0.853 -0.831
+    ##  3 hu_diameter wind         0.774 0.        0.758  0.788
+    ##  4 hu_diameter ts_diameter  0.684 0.        0.663  0.704
+    ##  5 ts_diameter pressure    -0.683 0.       -0.703 -0.663
+    ##  6 ts_diameter wind         0.640 0.        0.617  0.662
+    ##  7 ts_diameter lat          0.301 1.25e-73  0.266  0.335
+    ##  8 day         month       -0.183 3.59e-76 -0.205 -0.161
+    ##  9 hu_diameter lat          0.164 1.59e-22  0.127  0.201
+    ## 10 ts_diameter month        0.139 1.67e-16  0.102  0.176
+    ## # … with 35 more rows
 
-A point and whiskers plot is printed when using the `show_plot()`
-function:
+A plot showing point estimate and confidence intervals is printed when
+using the `show_plot()` function. Note that intervals that straddle the
+null value of 0 are shown in gray:
 
 ``` r
-inspect_cor(starwars) %>% show_plot()
+inspect_cor(storms) %>% show_plot()
 ```
 
 ![](man/figures/README-unnamed-chunk-19-1.png)<!-- -->
 
-Notes
+Notes:
 
   - The tibble is sorted in descending order of the absolute coefficient
     \(|\rho|\).
@@ -333,18 +343,30 @@ in the second. The `p_value` column contains a measure of evidence for
 whether the two correlation coefficients are equal or not.
 
 ``` r
-inspect_cor(star_1, star_2)
+inspect_cor(storms, storms[-c(1:200), ])
 ```
 
-    ## # A tibble: 3 x 5
-    ##   col_1      col_2  corr_1 corr_2   p_value
-    ##   <chr>      <chr>   <dbl>  <dbl>     <dbl>
-    ## 1 birth_year mass    0.956  0.465  1.37e-11
-    ## 2 birth_year height  0.135 NA     NA       
-    ## 3 mass       height  0.106 NA     NA
+    ## # A tibble: 45 x 5
+    ##    col_1       col_2       corr_1 corr_2 p_value
+    ##    <chr>       <chr>        <dbl>  <dbl>   <dbl>
+    ##  1 pressure    wind        -0.942 -0.942   0.929
+    ##  2 hu_diameter pressure    -0.842 -0.842   1    
+    ##  3 hu_diameter wind         0.774  0.774   1    
+    ##  4 hu_diameter ts_diameter  0.684  0.684   1    
+    ##  5 ts_diameter pressure    -0.683 -0.683   1    
+    ##  6 ts_diameter wind         0.640  0.640   1    
+    ##  7 ts_diameter lat          0.301  0.301   1    
+    ##  8 day         month       -0.183 -0.178   0.729
+    ##  9 hu_diameter lat          0.164  0.164   1    
+    ## 10 ts_diameter month        0.139  0.139   1    
+    ## # … with 35 more rows
+
+To plot the comparison of the top 20 correlation coefficients:
 
 ``` r
-inspect_cor(star_1, star_2) %>% show_plot()
+inspect_cor(storms, storms[-c(1:200), ]) %>% 
+  slice(1:20) %>%
+  show_plot()
 ```
 
 ![](man/figures/README-unnamed-chunk-21-1.png)<!-- -->
@@ -355,9 +377,10 @@ Notes:
     hypothesis \(H_0: \rho_1 = \rho_2\) and an indication that the true
     correlation coefficients differ.
   - The visualisation illustrates the significance of the difference
-    using a coloured bar overlay. Orange bars indicate evidence of
-    equality of correlations, while blue bars indicate inequality. If a
-    `p_value` cannot be calculated, no coloured bar is shown.
+    using a coloured bar underlay. Coloured bars indicate evidence of
+    inequality of correlations, while gray bars indicate equality.  
+  - For a pair of features, if either coefficient is `NA`, the
+    comparison is omitted from the visualisation.
   - The significance level can be specified using the `alpha` argument
     to `inspect_cor()`. The default is `alpha = 0.05`.
 
@@ -410,12 +433,12 @@ inspect_imb(star_1, star_2)
     ## # A tibble: 7 x 7
     ##   col_name   value  pcnt_1 cnt_1 pcnt_2 cnt_2 p_value
     ##   <chr>      <chr>   <dbl> <int>  <dbl> <int>   <dbl>
-    ## 1 gender     male       72    36    66     33   0.665
-    ## 2 hair_color none       46    23    30     15   0.149
-    ## 3 species    Human      34    17    50     25   0.156
-    ## 4 eye_color  blue       22    11    NA     NA  NA    
-    ## 5 homeworld  Naboo      18     9    18      9   1    
-    ## 6 skin_color fair       16     8    28.    14   0.227
+    ## 1 gender     male       72    36    64     32   0.520
+    ## 2 hair_color none       44    22    34     17   0.412
+    ## 3 species    Human      42    21    40     20   1.000
+    ## 4 skin_color fair       24    12    22     11   1.000
+    ## 5 eye_color  blue       24    12    NA     NA  NA    
+    ## 6 homeworld  Naboo      10     5    14.     7   0.758
     ## 7 name       Ackbar      2     1    NA     NA  NA
 
 ``` r
@@ -445,15 +468,22 @@ returns standard numerical summaries (`min`, `q1`, `mean`,
 (`pcnt_na`) and a simple histogram (`hist`).
 
 ``` r
-inspect_num(starwars, breaks = 10)
+inspect_num(storms, breaks = 10)
 ```
 
-    ## # A tibble: 3 x 10
-    ##   col_name     min    q1 median  mean    q3   max    sd pcnt_na hist       
-    ##   <chr>      <dbl> <dbl>  <dbl> <dbl> <dbl> <dbl> <dbl>   <dbl> <list>     
-    ## 1 birth_year     8  35       52  87.6  72     896 155.    50.6  <tibble [1…
-    ## 2 height        66 167      180 174.  191     264  34.8    6.90 <tibble [1…
-    ## 3 mass          15  55.6     79  97.3  84.5  1358 169.    32.2  <tibble [1…
+    ## # A tibble: 10 x 10
+    ##    col_name    min     q1 median    mean     q3    max     sd pcnt_na hist 
+    ##    <chr>     <dbl>  <dbl>  <dbl>   <dbl>  <dbl>  <dbl>  <dbl>   <dbl> <lis>
+    ##  1 day         1      8     16     15.9    24     31     9.01     0   <tib…
+    ##  2 hour        0      6     12      9.11   18     23     6.73     0   <tib…
+    ##  3 hu_diam…    0      0      0     21.4    28.8  345.   41.3     65.2 <tib…
+    ##  4 lat         7.2   17.5   24.4   24.8    31.3   51.9   8.54     0   <tib…
+    ##  5 long     -109.   -80.7  -64.5  -64.2   -48.6   -6    19.6      0   <tib…
+    ##  6 month       1      8      9      8.78    9     12     1.24     0   <tib…
+    ##  7 pressure  882    985    999    992.   1006   1022    19.5      0   <tib…
+    ##  8 ts_diam…    0     69.0  138.   167.    242.  1001.  141.      65.2 <tib…
+    ##  9 wind       10     30     45     53.5    65    160    26.2      0   <tib…
+    ## 10 year     1975   1990   1999   1998.   2006   2015    10.3      0   <tib…
 
 The `hist` column is a list whose elements are tibbles each containing
 the relative frequencies of bins for each feature. These tibbles are
@@ -461,46 +491,33 @@ used to generate the histograms when `show_plot = TRUE`. For example,
 the histogram for `starwars$birth_year` is
 
 ``` r
-inspect_num(starwars)$hist$birth_year
+inspect_num(storms)$hist$pressure
 ```
 
-    ## # A tibble: 20 x 2
-    ##    value        prop
-    ##    <chr>       <dbl>
-    ##  1 [-Inf, 0)  0     
-    ##  2 [0, 50)    0.488 
-    ##  3 [50, 100)  0.395 
-    ##  4 [100, 150) 0.0465
-    ##  5 [150, 200) 0     
-    ##  6 [200, 250) 0.0233
-    ##  7 [250, 300) 0     
-    ##  8 [300, 350) 0     
-    ##  9 [350, 400) 0     
-    ## 10 [400, 450) 0     
-    ## 11 [450, 500) 0     
-    ## 12 [500, 550) 0     
-    ## 13 [550, 600) 0     
-    ## 14 [600, 650) 0.0233
-    ## 15 [650, 700) 0     
-    ## 16 [700, 750) 0     
-    ## 17 [750, 800) 0     
-    ## 18 [800, 850) 0     
-    ## 19 [850, 900) 0.0233
-    ## 20 [900, Inf) 0
+    ## # A tibble: 31 x 2
+    ##    value            prop
+    ##    <chr>           <dbl>
+    ##  1 [-Inf, 880) 0        
+    ##  2 [880, 885)  0.0000999
+    ##  3 [885, 890)  0.000200 
+    ##  4 [890, 895)  0.000400 
+    ##  5 [895, 900)  0.000300 
+    ##  6 [900, 905)  0.000300 
+    ##  7 [905, 910)  0.000699 
+    ##  8 [910, 915)  0.000999 
+    ##  9 [915, 920)  0.00130  
+    ## 10 [920, 925)  0.00390  
+    ## # … with 21 more rows
 
 A histogram is generated for each numeric feature by passing the result
 to the `show_plot()` function:
 
 ``` r
-inspect_num(starwars, breaks = 10)
+inspect_num(storms, breaks = 10) %>%
+  show_plot()
 ```
 
-    ## # A tibble: 3 x 10
-    ##   col_name     min    q1 median  mean    q3   max    sd pcnt_na hist       
-    ##   <chr>      <dbl> <dbl>  <dbl> <dbl> <dbl> <dbl> <dbl>   <dbl> <list>     
-    ## 1 birth_year     8  35       52  87.6  72     896 155.    50.6  <tibble [1…
-    ## 2 height        66 167      180 174.  191     264  34.8    6.90 <tibble [1…
-    ## 3 mass          15  55.6     79  97.3  84.5  1358 169.    32.2  <tibble [1…
+![](man/figures/README-unnamed-chunk-28-1.png)<!-- -->
 
 ##### `inspect_num()` for two dataframes
 
@@ -520,18 +537,26 @@ calculated, if blue, the histograms are not found to be significantly
 different otherwise the bands are red.
 
 ``` r
-inspect_num(star_1, star_2)
+inspect_num(storms, storms[-c(1:10), -1])
 ```
 
-    ## # A tibble: 3 x 5
-    ##   col_name   hist_1            hist_2                jsd fisher_p
-    ##   <chr>      <list>            <list>              <dbl>    <dbl>
-    ## 1 birth_year <tibble [14 × 2]> <tibble [14 × 2]>  0.0936    0.136
-    ## 2 height     <tibble [19 × 2]> <NULL>            NA        NA    
-    ## 3 mass       <tibble [30 × 2]> <tibble [30 × 2]>  0.0212    0.802
+    ## # A tibble: 10 x 5
+    ##    col_name    hist_1            hist_2                    jsd fisher_p
+    ##    <chr>       <list>            <list>                  <dbl>    <dbl>
+    ##  1 day         <tibble [18 × 2]> <tibble [18 × 2]> 0.00000119    NA    
+    ##  2 hour        <tibble [25 × 2]> <tibble [25 × 2]> 0.000539      NA    
+    ##  3 hu_diameter <tibble [20 × 2]> <tibble [20 × 2]> 0              1.000
+    ##  4 lat         <tibble [25 × 2]> <tibble [25 × 2]> 0.000000460   NA    
+    ##  5 long        <tibble [23 × 2]> <tibble [23 × 2]> 0.00000174    NA    
+    ##  6 month       <tibble [24 × 2]> <tibble [24 × 2]> 0.0125        NA    
+    ##  7 pressure    <tibble [31 × 2]> <tibble [31 × 2]> 0.00000102    NA    
+    ##  8 ts_diameter <tibble [23 × 2]> <tibble [23 × 2]> 0              1.000
+    ##  9 wind        <tibble [17 × 2]> <tibble [17 × 2]> 0.000104      NA    
+    ## 10 year        <tibble [23 × 2]> <tibble [23 × 2]> 0.0000221     NA
 
 ``` r
-inspect_num(star_1, star_2) %>% show_plot()
+inspect_num(storms, storms[-c(1:10), -1]) %>% 
+  show_plot()
 ```
 
 ![](man/figures/README-unnamed-chunk-30-1.png)<!-- -->
@@ -627,15 +652,15 @@ inspect_cat(star_1, star_2)
 ```
 
     ## # A tibble: 7 x 5
-    ##   col_name        jsd fisher_p lvls_1            lvls_2           
-    ##   <chr>         <dbl>    <dbl> <list>            <list>           
-    ## 1 eye_color   0.0821     0.544 <tibble [10 × 3]> <tibble [11 × 3]>
-    ## 2 gender      0.00471    0.945 <tibble [5 × 3]>  <tibble [5 × 3]> 
-    ## 3 hair_color  0.0543     0.866 <tibble [12 × 3]> <tibble [10 × 3]>
-    ## 4 homeworld   0.235      1.000 <tibble [33 × 3]> <tibble [26 × 3]>
-    ## 5 name       NA         NA     <tibble [50 × 3]> <NULL>           
-    ## 6 skin_color  0.147      0.995 <tibble [26 × 3]> <tibble [20 × 3]>
-    ## 7 species     0.174      1.000 <tibble [27 × 3]> <tibble [19 × 3]>
+    ##   col_name       jsd fisher_p lvls_1            lvls_2           
+    ##   <chr>        <dbl>    <dbl> <list>            <list>           
+    ## 1 eye_color   0.122     0.703 <tibble [13 × 3]> <tibble [11 × 3]>
+    ## 2 gender      0.0106    0.870 <tibble [5 × 3]>  <tibble [5 × 3]> 
+    ## 3 hair_color  0.0690    0.921 <tibble [11 × 3]> <tibble [10 × 3]>
+    ## 4 homeworld   0.180     0.996 <tibble [36 × 3]> <tibble [28 × 3]>
+    ## 5 name       NA        NA     <tibble [50 × 3]> <NULL>           
+    ## 6 skin_color  0.122     0.936 <tibble [26 × 3]> <tibble [26 × 3]>
+    ## 7 species     0.138     0.990 <tibble [26 × 3]> <tibble [22 × 3]>
 
 ``` r
 inspect_cat(star_1, star_2) %>% show_plot()

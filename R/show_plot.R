@@ -6,8 +6,14 @@
 #' @param high_cardinality Minimum number of occurrences of category to be shown as a distinct segment 
 #' in the plot (\code{inspect_cat} only).  Default is 0.  This can help when some columns 
 #' contain many unique or near-unique levels that take a long time to render.
-#' @param cols Vector containing names or integers indicating colours for the plotted bars for levels,
-#' missing values and for high cardinality values, respectively.
+#' @param col_palette Integer indicating the colour palette to use.
+#' 
+#'  - `0`: (default) `ggplot2` color palette
+#'  - `1`: a [colorblind friendly palette](http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/)
+#'  - `2`: [80s theme](https://www.color-hex.com/color-palette/25888)
+#'  - `3`: [rainbox theme](https://www.color-hex.com/color-palette/79261)
+#'  - `4`: [mario theme](https://www.color-hex.com/color-palette/78663)
+#'  - `5`: [pokemon theme](https://www.color-hex.com/color-palette/78664)
 #' @param plot_layout Vector specifying the number of rows and columns 
 #' in the plotting grid.  For example, 3 rows and 2 columns would be specified as 
 #' \code{plot_layout = c(3, 2)}.
@@ -47,7 +53,7 @@
 
 show_plot <- function(x, text_labels = TRUE, alpha = 0.05, 
                       high_cardinality = 0, plot_layout = NULL,
-                      cols = c("tomato3", "gray65", "darkmagenta")){
+                      col_palette = 0){
   type     <- attr(x, "type")
   df_names <- attr(x, "df_names")
   
@@ -56,7 +62,7 @@ show_plot <- function(x, text_labels = TRUE, alpha = 0.05,
       plot_cat(x, df_names = df_names,
                text_labels = text_labels, 
                high_cardinality = high_cardinality, 
-               cols = cols)
+               col_palette = col_palette)
   }
   
   # correlation plots
@@ -64,10 +70,12 @@ show_plot <- function(x, text_labels = TRUE, alpha = 0.05,
     if(type[[2]] == 1){
       x$pair <- attr(x, "pair")
       plot_cor_1(x, df_names = df_names, alpha = alpha,
-                 text_labels = text_labels)
+                 text_labels = text_labels, 
+                 col_palette = col_palette)
     } else {
       plot_cor_2(x, df_names = df_names, alpha = alpha,
-                 text_labels = text_labels)
+                 text_labels = text_labels, 
+                 col_palette = col_palette)
     }
   }
   
@@ -75,10 +83,12 @@ show_plot <- function(x, text_labels = TRUE, alpha = 0.05,
   if(type[[1]] == "imb"){
     if(type[[2]] == 1){
       plot_imb_1(x, df_names = df_names,
-                 text_labels = text_labels)
+                 text_labels = text_labels, 
+                 col_palette = col_palette)
     } else {
       plot_imb_2(x, df_names = df_names, alpha = alpha,
-                 text_labels = text_labels)
+                 text_labels = text_labels, 
+                 col_palette = col_palette)
     }
   }
   
@@ -87,10 +97,14 @@ show_plot <- function(x, text_labels = TRUE, alpha = 0.05,
     sizes <- attr(x, "sizes")
     if(type[[2]] == 1){
       plot_mem_1(x, df_names = df_names, 
-                 text_labels = text_labels, sizes = sizes)
+                 text_labels = text_labels, 
+                 sizes = sizes, 
+                 col_palette = col_palette)
     } else {
       plot_mem_2(x, df_names = df_names,
-                 text_labels = text_labels, sizes = sizes)
+                 text_labels = text_labels, 
+                 sizes = sizes, 
+                 col_palette = col_palette)
     }
   }
   
@@ -98,10 +112,12 @@ show_plot <- function(x, text_labels = TRUE, alpha = 0.05,
   if(type[[1]] == "na"){
     if(type[[2]] == 1){
       plot_na_1(x, df_names = df_names,
-                text_labels = text_labels)
+                text_labels = text_labels, 
+                col_palette = col_palette)
     } else {
       plot_na_2(x, df_names = df_names, alpha = alpha,
-                text_labels = text_labels)
+                text_labels = text_labels, 
+                col_palette = col_palette)
     }
   }
   
@@ -122,10 +138,12 @@ show_plot <- function(x, text_labels = TRUE, alpha = 0.05,
   if(type[[1]] == "types"){
     if(type[[2]] == 1){
       plot_types_1(x, df_names = df_names,
-                   text_labels = text_labels)
+                   text_labels = text_labels, 
+                   col_palette = col_palette)
     } else {
       plot_types_2(x, df_names = df_names,
-                  text_labels = text_labels)
+                  text_labels = text_labels,
+                  col_palette = col_palette)
     }
   }
 }

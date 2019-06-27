@@ -7,17 +7,19 @@
 #' @importFrom ggplot2 scale_fill_discrete
 #' @importFrom ggplot2 theme
 
-plot_types_1 <- function(df_plot, df_names, text_labels){
+plot_types_1 <- function(df_plot, df_names, text_labels, col_palette){
   # convert column names to factor
   df_plot <- df_plot %>% 
     mutate(type = factor(type, levels = as.character(type)))
   # construct bar plot of column types
-  plt <- bar_plot(df_plot = df_plot, x = "type", y = "cnt", 
+  plt <- bar_plot(df_plot = df_plot, 
+                  x = "type", y = "cnt", 
                   fill = "type", label = "cnt", 
-                  ttl = paste0("df::", df_names$df1), " column types",
-                  sttl = paste0("df::", df_names$df1,  " has ", sum(df_plot$cnt), 
-                                " columns."), 
-                  ylb = "Number of columns", lgnd = "Column types")
+                  ttl  = paste0("df::", df_names$df1, " column types"),
+                  sttl = paste0("df::", df_names$df1,  " has ", 
+                                sum(df_plot$cnt), " columns."), 
+                  ylb  = "Number of columns", 
+                  col_palette = col_palette)
   # add text annotation to plot if requested
   if(text_labels){
     plt <- add_annotation_to_bars(x = df_plot$type, 
@@ -30,7 +32,7 @@ plot_types_1 <- function(df_plot, df_names, text_labels){
   print(plt)
 }
 
-plot_types_2 <- function(df_plot, df_names, text_labels){
+plot_types_2 <- function(df_plot, df_names, text_labels, col_palette){
   # convert to a taller df for plotting
   d1 <- df_plot %>% select(1, 2:3) %>% mutate(df_input = df_names$df1)
   d2 <- df_plot %>% select(1, 4:5) %>% mutate(df_input = df_names$df2)
@@ -56,11 +58,9 @@ plot_types_2 <- function(df_plot, df_names, text_labels){
   # plot the result
   plt <- z_tall %>%
     mutate(type = factor(type, levels = df_plot$type)) %>%
-    ggplot(aes(x = type, y = cnt)) + 
+    ggplot(aes(x = type, y = cnt, fill = as.factor(df_input),
+               group = as.factor(df_input))) + 
     geom_bar(stat = "identity", position = "dodge", 
-             aes(x = type, y = cnt, 
-                 fill = as.factor(df_input), 
-                 group = as.factor(df_input)), 
              na.rm = TRUE)
   
   # add anotations if requested
@@ -73,11 +73,13 @@ plot_types_2 <- function(df_plot, df_names, text_labels){
   }
   
   # labels the axes, add title and subtitle
-  plt <- plt + labs(x = "", y = "Number of columns", 
-                    title = ttl_plt, 
-                    subtitle = sttl) + 
+  plt <- plt + 
+    labs(x = "", y = "Number of columns", 
+         title = ttl_plt, 
+         subtitle = sttl) + 
     # label the legend 
-    scale_fill_discrete(name = "Data frame")
+    scale_fill_manual(name = "Data frame",  
+                      values = user_colours(3, col_palette)[c(1, 3)])
   
   # return plot
   print(plt)

@@ -1,6 +1,6 @@
 #' @importFrom ggplot2 scale_color_discrete
 
-plot_na_1 <- function(df_plot, df_names, text_labels){
+plot_na_1 <- function(df_plot, df_names, text_labels, col_palette){
   # convert col_name to factor
   df_plot <- df_plot %>% 
     mutate(col_name = factor(col_name, levels = as.character(col_name)))
@@ -11,16 +11,21 @@ plot_na_1 <- function(df_plot, df_names, text_labels){
                   sttl = paste0("df::", df_names$df1,  " has ", nrow(df_plot), 
                                 " columns, of which ", sum(df_plot$cnt > 0), 
                                 " have missing values"),
-                  ylb = "% of column that is NA", rotate = TRUE)
+                  ylb = "% of column that is NA", 
+                  rotate = TRUE, 
+                  col_palette = col_palette, 
+                  ylim_range = c(0, 1.01 * max(df_plot$pcnt)))
   # add text annotation to plot if requested
   if(text_labels){
-    plt <- add_annotation_to_bars(x = df_plot$col_name, y = df_plot$pcnt, 
-                                  z = df_plot$cnt, plt = plt)
+    plt <- add_annotation_to_bars(x = df_plot$col_name, 
+                                  y = df_plot$pcnt, 
+                                  z = df_plot$cnt, 
+                                  plt = plt)
   }
   print(plt)
 }
 
-plot_na_2 <- function(df_plot, df_names, alpha, text_labels){
+plot_na_2 <- function(df_plot, df_names, alpha, text_labels, col_palette){
   leg_text <- as.character(unlist(df_names))
   na_tab  <- df_plot
   df_plot <- df_plot %>% 
@@ -32,25 +37,25 @@ plot_na_2 <- function(df_plot, df_names, alpha, text_labels){
     mutate(is_sig = as.integer(p_value < alpha) + 2, index = 1:nrow(df_plot)) %>%
     replace_na(list(is_sig = 1)) %>%
     select(is_sig, index) 
-  
-  plt <- ggplot(df_plot, aes(x = factor(col_name, 
-                                            levels = rev(as.character(na_tab$col_name))), 
+  plt <- ggplot(df_plot, aes(x = factor(col_name, levels = rev(as.character(na_tab$col_name))), 
                                  y = pcnt, color = as.factor(data_frame))) +
     geom_blank() + theme_bw() + 
     theme(panel.border = element_blank(), panel.grid.major = element_blank()) +
     geom_rect(
-      fill = c("grey85", "darkorange2", "royalblue1")[p_val_tab$is_sig], alpha = 0.2,
+      fill = c(NA, "gray50", user_colours(9, col_palette)[9])[p_val_tab$is_sig], alpha = 0.2,
       xmin = p_val_tab$index - 0.4, xmax = p_val_tab$index + 0.4,
       ymin = -100, ymax = 200, linetype = "blank") +
     geom_hline(yintercept = 0, linetype = "dashed", color = "lightsteelblue4") + 
     geom_point(size = 1.25 * dot_size(nrow(df_plot)), color = "black", na.rm = TRUE) + 
     geom_point(size = dot_size(nrow(df_plot)), na.rm = TRUE) +
-    coord_flip()
-  plt <- plt + labs(x = "", 
-                    title =  paste0("% NA in df::", df_names$df1, " and df::", df_names$df2),
-                    subtitle = bquote("Blue/orange stripes represent inequality/equality of % NA")) + 
-    scale_color_discrete(name = "Data frame", labels = leg_text) + 
-    labs(y = "Percent missing", x = "") %>% suppressWarnings()
+    scale_colour_manual(values = get_best_pair(col_palette), 
+                        name = "Data frame", labels = leg_text) + 
+    coord_flip() + 
+    labs(x = "", 
+         title =  paste0("% NA in df::", df_names$df1, " and df::", df_names$df2),
+         subtitle = bquote("Color/gray stripes mean different/equal missingness")) + 
+    labs(y = "% of column that is NA", x = "") +
+    guides(color = guide_legend(override.aes = list(fill = NA)))
   
   print(plt)
 }
