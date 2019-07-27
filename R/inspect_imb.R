@@ -63,10 +63,13 @@ inspect_imb <- function(df1, df2 = NULL, show_plot = FALSE, include_na = FALSE){
   
   if(is.null(df2)){
     # pick out categorical columns
-    df_cat <- df1 %>% select_if(function(v) is.character(v) | is.factor(v) | is.logical(v))
+    df_cat <- df1 %>% 
+      select_if(function(v) is.character(v) | is.factor(v) | is.logical(v))
     n_cols <- ncol(df_cat)
     # calculate imbalance if any columns available
     if(n_cols > 0){
+      # check any factors for duplicate labels
+      df_cat <- check_factors(df_cat)
       names_cat <- colnames(df_cat)
       # function to find the percentage of the most common value in a vector
       levels_list <- vector("list", length = n_cols)
@@ -91,7 +94,7 @@ inspect_imb <- function(df1, df2 = NULL, show_plot = FALSE, include_na = FALSE){
         select(col_name, value, pcnt = prop, cnt)
 
       # attach attributes required for plotting
-      attr(out, "type")     <- list("imb", 1)
+      attr(out, "type")     <- list(method = "imb", 1)
       attr(out, "df_names") <- df_names
     } else {
       # return empty dataframe if no categorical columns 
@@ -111,7 +114,7 @@ inspect_imb <- function(df1, df2 = NULL, show_plot = FALSE, include_na = FALSE){
     out <- left_join(s1, s2, by = c("col_name", "value")) %>%
       mutate(p_value = prop_test_imb(., n_1 = nrow(df1), n_2 = nrow(df2)))
     # attach attributes required for plotting
-    attr(out, "type")     <- list("imb", 2)
+    attr(out, "type")     <- list(method = "imb", 2)
     attr(out, "df_names") <- df_names
   }
   if(show_plot) plot_deprecated(out)

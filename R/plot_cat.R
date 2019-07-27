@@ -7,7 +7,7 @@
 #' @importFrom ggplot2 scale_colour_manual
 plot_cat <- function(levels_df, df_names, text_labels, high_cardinality, 
                      cols = c("tomato3", "gray65", "darkmagenta"), 
-                     col_palette){
+                     col_palette, label_thresh){
   # min_freq label
   min_freq_label <- paste0("High cardinality")
 
@@ -74,7 +74,6 @@ plot_cat <- function(levels_df, df_names, text_labels, high_cardinality,
 
   # add new keys and arrange
   lvl_df2 <- lvl_df %>% 
-    # arrange(col_name, prop, value) %>%
     mutate(new_level_key = paste0(level_key, "-", dfi)) 
   
   # # move high cardinality to the end of each column block
@@ -114,10 +113,8 @@ plot_cat <- function(levels_df, df_names, text_labels, high_cardinality,
   colour_vector[lvl_df2$value == min_freq_label] <- cols[3]
   # generate plot
   plt <- lvl_df2 %>%
-    ggplot(aes(x = col_name, y = prop, fill = new_level_key, 
-               label = value)) +
-    geom_bar(position = "stack", stat = "identity", 
-             colour = "black", size = 0.2) +
+    ggplot(aes(x = col_name, y = prop, fill = new_level_key)) +
+    geom_bar(stat = "identity", position = "stack", colour = "black", size = 0.2) +
     scale_fill_manual(values = colour_vector) +
     guides(fill = FALSE) + 
     coord_flip() +
@@ -129,28 +126,62 @@ plot_cat <- function(levels_df, df_names, text_labels, high_cardinality,
          subtitle = bquote("Gray segments are missing values")) 
 
   if(text_labels){
-    annts <- lvl_df2 %>% mutate(col_num = as.integer(col_name))
-    lvl_df2$col_vec <- factor(as.integer(annts$colvalstretch < 0.7), 
-                                 levels = c(1, 0))
+    lvl_df3 <- lvl_df2 
+    annts <- lvl_df3 %>% 
+      mutate(col_num = as.integer(col_name)) 
+    lvl_df3$col_vec <- factor(as.integer(annts$colvalstretch < 0.7), levels = c(1, 0))
+    lvl_df3$value[nchar(lvl_df3$value) == 0] <- '""'
     
+    sum_small_cats <- function(lvldf, prop_thresh){
+      # make levels df as a list
+      lvldf_grp <- lvldf %>% group_by(col_name) %>% tidyr::nest()
+      lvldf_lst <- lvldf_grp$data
+      # loop over list elements, sum and reorder components
+      for(i in 1:length(lvldf_lst)){
+        lst_i <- lvldf_lst[[i]]
+        b1    <- lst_i %>% filter(prop < prop_thresh)
+        if(nrow(b1) > 0){
+          b1top <- b1 %>% slice(1)
+          b1top$prop[1]  <- sum(b1$prop, na.rm = T)
+          b1top$value[1] <- NA
+          # combine the summed part with the rest
+           lst_i <- lst_i %>% 
+            filter(prop >= prop_thresh) %>% 
+            bind_rows(b1top) %>%
+            arrange(value)
+          # if high card is in there, reposition to top
+          hc_i <- which(lst_i$col_vec == 0)
+          if(length(hc_i) > 0) lst_i <- rbind(lst_i[hc_i, ], lst_i[-hc_i, ])
+          lvldf_lst[[i]] <- lst_i
+        } else {
+          lvldf_lst[[i]] <- lst_i
+        }
+      }
+      lvldf_grp$data <- lvldf_lst
+      return(tidyr::unnest(lvldf_grp))
+    }
+    
+    lvl_df4 <- lvl_df3 %>% sum_small_cats(prop_thresh = label_thresh)
+
     plt <- plt + 
-      suppressWarnings( 
-        ggfittext::geom_fit_text(
-          data = lvl_df2,
-          aes(x = col_name,
-              y = prop,
-              label = value, 
-              fill = new_level_key, 
-              colour = as.factor(col_vec)),
-          inherit.aes = FALSE,
-          na.rm = TRUE,
-          position = "stack",
-          place = "middle",
-          grow = FALSE, 
-          outside = FALSE, 
-          show.legend = FALSE
-        )) + 
-          scale_colour_manual(values = c("white", "gray55"))
+      suppressWarnings(ggfittext::geom_fit_text(
+        data = lvl_df4,
+        aes(x = col_name,
+            y = prop,
+            label = value, 
+            fill = new_level_key,
+            colour = col_vec,
+            ymin = 0,
+            ymax = prop),
+        inherit.aes = FALSE,
+        na.rm = TRUE,
+        position = "stack",
+        place = "middle",
+        grow = FALSE,
+        outside = FALSE,
+        show.legend = FALSE
+      )) + 
+      scale_colour_manual(values = c("white", "gray55"))
   }
   
   # if this is a comparison, then add x-axis labels and descriptive title
@@ -167,7 +198,6 @@ plot_cat <- function(levels_df, df_names, text_labels, high_cardinality,
   }
   # add title
   plt <- plt + labs(title = ttl)
-  
-  suppressWarnings(print(plt))
+  plt
 }
 

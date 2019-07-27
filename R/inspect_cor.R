@@ -1,13 +1,16 @@
 #' Summarise and compare Pearson's correlation coefficients for numeric columns in one or two dataframes.
 #'
-#' @param df1 A data frame
+#' @param df1 A data frame. 
 #' @param df2 An optional second data frame for comparing correlation 
 #' coefficients.  Defaults to \code{NULL}.
+#' @param method a character string indicating which type of correlation coefficient to use, one 
+#' of "pearson", "kendall", or "spearman", which can be abbreviated.
 #' @param alpha Alpha level for correlation confidence intervals.  Defaults to 0.05.
-#' @param with_col Character vector of columns to calculate correlations with.  When set to 
+#' @param with_col Character vector of column names to calculate correlations with.  When set to 
 #' the default, \code{NULL}, all pairs of correlations are returned.
 #' @param show_plot (Deprecated) Logical flag indicating whether a plot should be shown.  
 #' Superseded by the function \code{show_plot()} and will be dropped in a future version.
+#' 
 #' @return A tibble summarising and comparing the correlations for each numeric column 
 #' in one or a pair of data frames.
 #' @details When only \code{df1} is specified, a tibble is returned which 
@@ -19,6 +22,9 @@
 #'   \item \code{p_value} p-value associated with the null hypothesis of 0 correlation, small values 
 #'   indicate evidence that the true correlation is not equal to 0.
 #' }
+#' If `df1` has class `grouped_df`, then correlations will be calculated within the grouping levels 
+#' and the tibble returned will have an additional column corresponding to the group labels.
+#' 
 #' When both \code{df1} and \code{df2} are specified, the tibble returned performs a comparison of the 
 #' correlation coefficients across the dataframes.
 #' \itemize{
@@ -35,12 +41,18 @@
 #' data("starwars", package = "dplyr")
 #' # correlations in numeric columns
 #' inspect_cor(starwars)
-#' 
 #' # only show correlations with 'mass' column
 #' inspect_cor(starwars, with_col = "mass")
-#' 
 #' # compare correlations with a different data frame
 #' inspect_cor(starwars, starwars[1:10, ])
+#' 
+#' # NOT RUN - change in correlation over time
+#' # library(dplyr)
+#' # tech_grp <- tech %>% 
+#' #         group_by(year) %>%
+#' #         inspect_cor()
+#' # tech_grp %>% show_plot()     
+#' 
 #' @importFrom dplyr arrange
 #' @importFrom dplyr contains
 #' @importFrom dplyr desc
@@ -53,17 +65,19 @@
 #' @importFrom dplyr slice
 #' @importFrom magrittr %>%
 #' @importFrom tibble tibble
+#' @importFrom tidyr nest
 
-inspect_cor <- function(df1, df2 = NULL, with_col = NULL, alpha = 0.05, show_plot = FALSE){
+inspect_cor <- function(df1, df2 = NULL, method = "pearson", with_col = NULL, 
+                        alpha = 0.05, show_plot = FALSE){
   # perform basic column check on dataframe input
-  check_df_cols(df1)
+  input_type <- check_df_cols(df1, df2)
   # capture the data frame names
   df_names <- get_df_names()
   # filter to only the numeric variables
   df_numeric <- df1 %>% 
     select_if(is.numeric)
   # if only a single df input
-  if(is.null(df2)){
+  if(input_type == "single"){
     # check that with_col exists
     if(!is.null(with_col)){
       in_num <- with_col %in% colnames(df_numeric)
@@ -79,14 +93,13 @@ inspect_cor <- function(df1, df2 = NULL, with_col = NULL, alpha = 0.05, show_plo
       suppressWarnings(cor_df <- cor_test_1(df_numeric,
                                             df_name = df_names[[1]], 
                                             with_col = with_col,
-                                            alpha = alpha))
+                                            alpha = alpha, 
+                                            method = method))
       # return top strongest if requested
       pair <- cor_df %>% select(pair) %>% unlist
       out <- cor_df %>% select(-pair)
       
       # attach attributes required for plotting
-      attr(out, "type") <- list("cor", 1)
-      attr(out, "df_names") <- df_names
       attr(out, "pair") <- pair
     } else {
       # return empty dataframe 
@@ -94,13 +107,14 @@ inspect_cor <- function(df1, df2 = NULL, with_col = NULL, alpha = 0.05, show_plo
                     col_2 = character(), 
                     corr = numeric())
     } 
-  } else {
+  } 
+  if(input_type == "pair"){
     # stats for df1
-    s1 <- inspect_cor(df1) %>% 
+    s1 <- inspect_cor(df1, method = method) %>% 
       select(col_1, col_2, corr) %>% 
       rename(corr_1 = corr)
     # stats for df2
-    s2 <- inspect_cor(df2) %>% 
+    s2 <- inspect_cor(df2, method = method) %>% 
       select(col_1, col_2, corr) %>% 
       rename(corr_2 = corr)
     # join the two
@@ -108,11 +122,14 @@ inspect_cor <- function(df1, df2 = NULL, with_col = NULL, alpha = 0.05, show_plo
     # add p_value for test of difference between correlation coefficients
     out$p_value <- cor_test(out$corr_1, out$corr_2, 
                             n_1 = nrow(df1), n_2 = nrow(df2))
-
-    # attach attributes required for plotting
-    attr(out, "type")     <- list("cor", 2)
-    attr(out, "df_names") <- df_names
   }
+  if(input_type == "grouped"){
+    out <- apply_across_groups(df = df1, fn = inspect_cor, 
+                               method = method, with_col = with_col, alpha = alpha)
+  }
+  attr(out, "type")     <- list(method = "cor", input_type = input_type)
+  attr(out, "df_names") <- df_names
+  attr(out, "method")   <- method
   if(show_plot) plot_deprecated(out)
   return(out)
 }

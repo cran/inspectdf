@@ -14,10 +14,14 @@
 #'  - `3`: [rainbox theme](https://www.color-hex.com/color-palette/79261)
 #'  - `4`: [mario theme](https://www.color-hex.com/color-palette/78663)
 #'  - `5`: [pokemon theme](https://www.color-hex.com/color-palette/78664)
+#' @param plot_type String determining the type of plot to show.  Defaults to `"bar"`.  
 #' @param plot_layout Vector specifying the number of rows and columns 
 #' in the plotting grid.  For example, 3 rows and 2 columns would be specified as 
 #' \code{plot_layout = c(3, 2)}.
 #' Default is \code{TRUE}.
+#' @param label_thresh Minimum percentage frequency of category for a text label to be shown.
+#' Defaults to 0.1.  Smaller values will show potentially smaller labels, but at the expense of longer
+#' rendering time.
 #' @export
 #' @examples 
 #' # Load 'starwars' data
@@ -53,97 +57,123 @@
 
 show_plot <- function(x, text_labels = TRUE, alpha = 0.05, 
                       high_cardinality = 0, plot_layout = NULL,
-                      col_palette = 0){
+                      col_palette = 0, plot_type = "bar", label_thresh = 0.1){
   type     <- attr(x, "type")
   df_names <- attr(x, "df_names")
   
   # categorical plots
-  if(type[[1]] == "cat"){
-      plot_cat(x, df_names = df_names,
-               text_labels = text_labels, 
-               high_cardinality = high_cardinality, 
-               col_palette = col_palette)
+  if(type$method == "cat"){
+    plt <- plot_cat(x, df_names = df_names,
+                    text_labels = text_labels, 
+                    high_cardinality = high_cardinality, 
+                    col_palette = col_palette, 
+                    label_thresh = label_thresh)
   }
   
   # correlation plots
-  if(type[[1]] == "cor"){
-    if(type[[2]] == 1){
-      x$pair <- attr(x, "pair")
-      plot_cor_1(x, df_names = df_names, alpha = alpha,
-                 text_labels = text_labels, 
-                 col_palette = col_palette)
-    } else {
-      plot_cor_2(x, df_names = df_names, alpha = alpha,
-                 text_labels = text_labels, 
-                 col_palette = col_palette)
+  if(type$method == "cor"){
+    method   <- attr(x, "method")
+    if(type$input_type == "single"){
+      x$pair   <- attr(x, "pair")
+      plt <- plot_cor_single(x, 
+                             df_names = df_names, 
+                             alpha = alpha,
+                             text_labels = text_labels, 
+                             col_palette = col_palette,
+                             method      = method)
+    }
+    if(type$input_type == "pair"){
+      plt <- plot_cor_pair(x, 
+                           df_names = df_names, 
+                           alpha = alpha,
+                           text_labels = text_labels, 
+                           col_palette = col_palette, 
+                           method      = method)
+    }
+    if(type$input_type == "grouped"){
+      plt <- plot_cor_grouped(x, 
+                              df_names = df_names,
+                              text_labels = text_labels, 
+                              col_palette = col_palette, 
+                              method      = method, 
+                              plot_type   = plot_type)
     }
   }
   
   # imbalance plots
-  if(type[[1]] == "imb"){
+  if(type$method == "imb"){
     if(type[[2]] == 1){
-      plot_imb_1(x, df_names = df_names,
-                 text_labels = text_labels, 
-                 col_palette = col_palette)
+      plt <- plot_imb_1(x, df_names = df_names,
+                        text_labels = text_labels, 
+                        col_palette = col_palette)
     } else {
-      plot_imb_2(x, df_names = df_names, alpha = alpha,
-                 text_labels = text_labels, 
-                 col_palette = col_palette)
+      plt <- plot_imb_2(x, df_names = df_names, alpha = alpha,
+                        text_labels = text_labels, 
+                        col_palette = col_palette)
     }
   }
   
   # memory plots
-  if(type[[1]] == "mem"){
+  if(type$method == "mem"){
     sizes <- attr(x, "sizes")
     if(type[[2]] == 1){
-      plot_mem_1(x, df_names = df_names, 
-                 text_labels = text_labels, 
-                 sizes = sizes, 
-                 col_palette = col_palette)
+      plt <- plot_mem_1(x, df_names = df_names, 
+                        text_labels = text_labels, 
+                        sizes = sizes, 
+                        col_palette = col_palette)
     } else {
-      plot_mem_2(x, df_names = df_names,
-                 text_labels = text_labels, 
-                 sizes = sizes, 
-                 col_palette = col_palette)
+      plt <- plot_mem_2(x, df_names = df_names,
+                        text_labels = text_labels, 
+                        sizes = sizes, 
+                        col_palette = col_palette)
     }
   }
   
   # missingness plots
-  if(type[[1]] == "na"){
-    if(type[[2]] == 1){
-      plot_na_1(x, df_names = df_names,
-                text_labels = text_labels, 
-                col_palette = col_palette)
-    } else {
-      plot_na_2(x, df_names = df_names, alpha = alpha,
-                text_labels = text_labels, 
-                col_palette = col_palette)
+  if(type$method == "na"){
+    if(type$input_type == "single"){
+      plt <- plot_na_single(x, df_names = df_names,
+                            text_labels = text_labels, 
+                            col_palette = col_palette)
+    }
+    if(type$input_type == "pair"){
+      plt <- plot_na_pair(x, df_names = df_names, 
+                          alpha = alpha,
+                          text_labels = text_labels, 
+                          col_palette = col_palette)
+    }
+    if(type$input_type == "grouped"){
+      plt <- plot_na_grouped(x, df_names = df_names,
+                             text_labels = text_labels, 
+                             col_palette = col_palette, 
+                             plot_type = plot_type)
     }
   }
   
-  # missingness plots
-  if(type[[1]] == "num"){
+  # numeric plots
+  if(type$method == "num"){
     if(type[[2]] == 1){
-      plot_num_1(x, df_names = df_names,
-                 text_labels = text_labels, 
-                 plot_layout = plot_layout)
+      plt <- plot_num_1(x, df_names = df_names,
+                        text_labels = text_labels, 
+                        plot_layout = plot_layout)
     } else {
-      plot_num_2(x, df_names = df_names, alpha = alpha,
-                 text_labels = text_labels, 
-                 plot_layout = plot_layout)
+      plt <- plot_num_2(x, df_names = df_names, alpha = alpha,
+                        text_labels = text_labels, 
+                        plot_layout = plot_layout)
     }
   }
   
   # types plots
-  if(type[[1]] == "types"){
+  if(type$method == "types"){
     if(type[[2]] == 1){
-      plot_types_1(x, df_names = df_names,
-                   text_labels = text_labels, 
-                   col_palette = col_palette)
+      plt <- plot_types_1(x, df_names = df_names,
+                          text_labels = text_labels, 
+                          col_palette = col_palette)
     } else {
-      plot_types_2(x, df_names = df_names,
-                  text_labels = text_labels,
-                  col_palette = col_palette)
+      plt <- plot_types_2(x, df_names = df_names,
+                          text_labels = text_labels,
+                          col_palette = col_palette)
     }
   }
+  suppressWarnings(plt)
 }

@@ -70,6 +70,8 @@ inspect_cat <- function(df1, df2 = NULL, show_plot = FALSE){
   
     # calculate association if categorical columns exist
     if(ncol(df_cat) > 0){
+      # check any factors for duplicate labels
+      df_cat <- check_factors(df_cat)
       # get the levels for each category
       names_cat <- colnames(df_cat)
       n_cols <- ncol(df_cat)
@@ -103,7 +105,7 @@ inspect_cat <- function(df1, df2 = NULL, show_plot = FALSE){
       names(out$levels) <- out$col_name
       
       # attach attributes required for plotting
-      attr(out, "type")     <- list("cat", 1)
+      attr(out, "type")     <- list(method = "cat", 1)
       attr(out, "df_names") <- df_names
     } else {
       out <- tibble(col_name = character(), cnt = integer(), 
@@ -128,7 +130,7 @@ inspect_cat <- function(df1, df2 = NULL, show_plot = FALSE){
     names(out[[4]]) <- names(out[[5]]) <- as.character(out$col_name)
     
     # attach attributes required for plotting
-    attr(out, "type")     <- list("cat", 2)
+    attr(out, "type")     <- list(method = "cat", 2)
     attr(out, "df_names") <- df_names
   }
   if(show_plot) plot_deprecated(out)
