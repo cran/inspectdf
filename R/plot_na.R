@@ -10,7 +10,7 @@ plot_na_single <- function(df_plot, df_names, text_labels, col_palette){
   # construct bar plot of missingess
   plt <- bar_plot(df_plot = df_plot, x = "col_name", y = "pcnt", 
                   fill = "col_name", label = "cnt",
-                  ttl = paste0("Prevalance of NAs in df::", df_names$df1),
+                  ttl = paste0("Prevalence of NAs in df::", df_names$df1),
                   sttl = paste0("df::", df_names$df1,  " has ", nrow(df_plot), 
                                 " columns, of which ", sum(df_plot$cnt > 0), 
                                 " have missing values"),
@@ -66,8 +66,10 @@ plot_na_pair <- function(df_plot, df_names, alpha, text_labels, col_palette){
 plot_na_grouped <- function(df_plot, df_names, text_labels, col_palette, plot_type){
   # group variable name
   group_name <- colnames(df_plot)[1]
-  plt <- plot_grouped(df = df_plot, value = "pcnt", 
-                      series = "col_name", group = group_name, 
+  plt <- plot_grouped(df = df_plot, 
+                      value = "pcnt", 
+                      series = "col_name", 
+                      group = group_name, 
                       plot_type = plot_type, 
                       col_palette = col_palette, 
                       text_labels = text_labels, 

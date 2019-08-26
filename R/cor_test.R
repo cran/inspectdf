@@ -10,58 +10,48 @@
 #' @importFrom progress progress_bar
 #' @importFrom tibble as_tibble
 #' @importFrom tibble tibble
+#' @importFrom stats qnorm
 #' @importFrom stats pnorm
-#' @importFrom stats cor.test
+#' @importFrom stats cor
 
 cor_test <- function(cor_1, cor_2, n_1, n_2){
-  fisher_trans_1 <- 0.5 * log((1 + cor_1)/(1 - cor_1))
-  fisher_trans_2 <- 0.5 * log((1 + cor_2)/(1 - cor_2))
   var_diff       <- sqrt(1/(n_1 - 3) + 1/(n_2 - 3))
-  zstat          <- (fisher_trans_1 - fisher_trans_2) / var_diff
+  zstat          <- (atanh(cor_1) - atanh(cor_2)) / var_diff
   (2 * pnorm(-abs(zstat)))
 }
 
-
 # univariate correlation tests
-cor_test_1 <- function(df_input, df_name, with_col, alpha, method){
-  # every combination of variables
-  c_nms   <- c_nms_1 <- c_nms_2 <- colnames(df_input)
-  c_nms_1 <- if(is.null(with_col)) c_nms_1 else with_col
-  c_cmbs  <- expand.grid(col_1 = factor(c_nms_1, levels = c_nms_2), col_2 =  c_nms_2) 
-  c_cmbs  <- if(is.null(with_col)) c_cmbs %>% 
-    filter(as.numeric(col_1) > as.numeric(col_2)) else c_cmbs
-  c_cmbs  <- c_cmbs %>%
-    filter(!col_1 == col_2) %>%
-    mutate_all(as.character) %>% 
-    mutate(pair = paste(col_1, col_2, sep = " & "))
-  # loop over rows and calculate correlation, p.value and cint
-  out_cors  <- vector("list", length = nrow(c_cmbs))
-  total_its <- nrow(c_cmbs)
-  pb <- start_progress(prefix = " Column pair", total = total_its)
-  for(i in 1:total_its){
-    update_progress(bar = pb, iter = i, total = total_its, what = c_cmbs$pair[i])
-    c_df <- df_input[c(c_cmbs$col_1[i], c_cmbs$col_2[i])]
-    c_test <- try(cor.test(c_df[, 1, drop = TRUE], 
-                           c_df[, 2, drop = T], 
-                           conf.level = 1 - alpha, 
-                           method = method), 
-                  silent = TRUE)
-    if(!class(c_test) == "try-error"){
-      out_cors[[i]] <- tibble(corr = c_test$estimate, 
-                              p_value = c_test$p.value,
-                              lower = ifelse(is.null(c_test$conf.int),  NA, c_test$conf.int[1]), 
-                              upper = ifelse(is.null(c_test$conf.int),  NA, c_test$conf.int[2])) 
-    } else {
-      out_cors[[i]] <- tibble(corr = NA, 
-                              p_value = NA,
-                              lower = NA,
-                              upper = NA) 
-    }
-  }
-  # combine into a single tibble
-  cor_out <- bind_cols(c_cmbs, bind_rows(out_cors)) %>% 
-    arrange(desc(abs(corr))) %>% as_tibble()
-    
+cor_test_2 <- function(df_input, df_name, with_col, alpha, method){
+  # if with_col is specified, then only return a subset
+  x <- if(is.null(with_col)) df_input else df_input[with_col]
+  y <- if(is.null(with_col)) NULL else df_input[-which(names(df_input) %in% with_col)]
+  # need some way to count how many pairwise complete obs there are
+  z1 <- lapply(x, function(v) which(is.na(v)))
+  z2 <- if(is.null(with_col)) z1 else lapply(y, function(v) which(is.na(v)))
+  nna <- Vectorize(function(x, y) length(unique(c(x, y))))
+  nna_mat <- nrow(df_input) - outer(X = z1, Y = z2, nna)
+  if(is.null(with_col)) nna_mat[upper.tri(nna_mat, diag = TRUE)] <- Inf
+  # get the number of non-null elements
+  nna_df <- nna_mat %>%
+    as_tibble(rownames = 'col_1') %>% 
+    gather(key = "col_2", value = "nna", -col_1) %>%
+    filter(!nna == Inf)
+  # get the correlation table
+  cd <- cor(x = x, y = y, use = "pairwise.complete.obs", method = method)
+  if(is.null(with_col)) cd[upper.tri(cd, diag = TRUE)] <- Inf
+  cor_out <- cd %>%
+    as_tibble(rownames = 'col_1') %>% 
+    gather(key = "col_2", value = "corr", -col_1) %>%
+    filter(!corr == Inf | is.na(corr)) %>%
+    mutate(nna = nna_df$nna, se = (1 / sqrt(nna - 3))) %>%
+    arrange(desc(abs(corr))) %>%
+    mutate(p_value = 2 * pnorm(-abs(corr / se))) %>%
+    mutate(lower = tanh(atanh(corr) - qnorm(1 - (alpha/2)) * se)) %>%
+    mutate(upper = tanh(atanh(corr) + qnorm(1 - (alpha/2)) * se)) %>%
+    mutate(pair = paste(col_1, col_2, sep = " & ")) %>%
+    select(-nna, -se)
+
   # return tibble of correlations
   return(cor_out)
 }
+

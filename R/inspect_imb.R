@@ -1,33 +1,32 @@
 #' Summarise and compare columnwise imbalance for non-numeric columns in one or two dataframes.
 #'
-#' @param df1 A data frame
+#' @param df1 A dataframe.
 #' @param df2 An optional second data frame for comparing columnwise imbalance.  
 #' Defaults to \code{NULL}.  
 #' @param include_na Logical flag, whether to include missing values as a unique level.  Default
-#' is \code{FALSE} - to ignore NAs.
+#' is \code{FALSE} - to ignore \code{NA} values.
 #' @param show_plot (Deprecated) Logical flag indicating whether a plot should be shown.  
 #' Superseded by the function \code{show_plot()} and will be dropped in a future version.
 #' @return  A tibble summarising and comparing the imbalance for each non-numeric column 
 #' in one or a pair of data frames.
-#' @details When a single data frame is specified, a tibble is returned which 
-#' contains columnwise imbalance, with columns
+#' @details When \code{df2 = NULL}, a tibble containing a summary of columnwise imbalance 
+#' is returned, with columns:
 #' \itemize{
 #'   \item \code{col_name} character vector containing column names of \code{df1}.
 #'   \item \code{value} character vector containing the most common categorical level 
 #'   in each column of \code{df1}.
-#'   \item \code{pcnt} the percentage of each column's entries occupied by the level in
-#'   \code{value} column.
+#'   \item \code{pcnt} the relative frequency of each column's most common categorical level 
+#'   expressed as a percentage.
 #'   \item \code{cnt} the number of occurrences of the most common categorical level in each
 #'   column of \code{df1}.
 #' }
-#' When both \code{df1} and \code{df2} are specified, the most common levels in \code{df1} 
-#' are compared to columns in \code{df2}.  If a categorical column appears in
-#' both dataframes, a simple test is performed to test the null hypothesis that the rate of 
-#' occurrence of the common level in \code{df1} is the same in both dataframes.  
+#' When both \code{df1} and \code{df2} are specified, the most common levels in features common 
+#' to both \code{df1} and \code{df2} is returned. A simple test of the null hypothesis that the 
+#' relative frequencies of a common level is the same in both dataframes is performed.  
 #' The resulting tibble has columns
 #' \itemize{
-#'   \item \code{col_name} character vector containing column names of \code{df1} and 
-#'   \code{df2}.
+#'   \item \code{col_name} character vector containing names of the unique columns in \code{df1} 
+#'   and \code{df2}.
 #'   \item \code{value} character vector containing the most common categorical level 
 #'   in each column of \code{df1}.  
 #'   \item \code{pcnt_} the percentage of each column's entries occupied by the level in
@@ -57,11 +56,13 @@
 inspect_imb <- function(df1, df2 = NULL, show_plot = FALSE, include_na = FALSE){
   
   # perform basic column check on dataframe input
+  input_type <- check_df_cols(df1, df2)
+  # perform basic column check on dataframe input
   check_df_cols(df1)
   # capture the data frame names
   df_names <- get_df_names()
   
-  if(is.null(df2)){
+  if(input_type == "single"){
     # pick out categorical columns
     df_cat <- df1 %>% 
       select_if(function(v) is.character(v) | is.factor(v) | is.logical(v))
@@ -86,16 +87,12 @@ inspect_imb <- function(df1, df2 = NULL, show_plot = FALSE, include_na = FALSE){
       # collapse highest imbalance into single dataframe
       names(levels_list) <- names_cat
       imb_cols  <- suppressWarnings(bind_rows(levels_list, .id = "col_name"))
-
+      
       # tidy up table output
       out <- imb_cols %>% 
         mutate(prop = 100 * prop) %>%
         arrange(desc(prop)) %>% 
         select(col_name, value, pcnt = prop, cnt)
-
-      # attach attributes required for plotting
-      attr(out, "type")     <- list(method = "imb", 1)
-      attr(out, "df_names") <- df_names
     } else {
       # return empty dataframe if no categorical columns 
       out <- tibble(col_name = character(), 
@@ -103,7 +100,8 @@ inspect_imb <- function(df1, df2 = NULL, show_plot = FALSE, include_na = FALSE){
                     pcnt = numeric(), 
                     cnt = integer())
     }
-  } else {
+  }
+  if(input_type == "pair"){
     # summary of df1
     s1 <- inspect_imb(df1, include_na = include_na) %>% 
       rename(pcnt_1 = pcnt, cnt_1 = cnt)
@@ -113,10 +111,13 @@ inspect_imb <- function(df1, df2 = NULL, show_plot = FALSE, include_na = FALSE){
     # left join summaries together
     out <- left_join(s1, s2, by = c("col_name", "value")) %>%
       mutate(p_value = prop_test_imb(., n_1 = nrow(df1), n_2 = nrow(df2)))
-    # attach attributes required for plotting
-    attr(out, "type")     <- list(method = "imb", 2)
-    attr(out, "df_names") <- df_names
+  } 
+  if(input_type == "grouped"){
+    out <- apply_across_groups(df = df1, fn = inspect_imb)
   }
+  # attach attributes required for plotting
+  attr(out, "type")     <- list(method = "imb", input_type = input_type)
+  attr(out, "df_names") <- df_names
   if(show_plot) plot_deprecated(out)
   return(out)
 }

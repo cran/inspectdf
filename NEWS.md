@@ -1,17 +1,38 @@
 
-<!-- # `inspectdf` 0.0.3.9000 -->
+# `inspectdf` 0.0.5
 
-<!-- - `show_plot()` now returns a `ggplot2` object rather than printing the plot - thanks to [Garrick Aden-Buie](https://github.com/gadenbuie) for the [suggestion](https://github.com/alastairrushworth/inspectdf/issues/14). -->
+  - Fixed error causing `inspect_num()` to fail when columns contained
+    all `NA` values. Thanks to [Ryan
+    Tanner](https://github.com/ryanatanner) for the
+    [report](https://github.com/alastairrushworth/inspectdf/issues/18)
+  - Speed-up of `inspect_cor()` for large data frames with many numeric
+    columns.
+  - Added approximate confidence intervals and tests for `method =
+    'kendall'` and `method = 'spearman'` in `inspect_cor()`.
 
-<!-- - Dramatic speed up of `inspect_cat` plotting by avoiding text labels for small regions. -->
+# `inspectdf` 0.0.4
 
-<!-- - Added `tech` dataset. -->
-
-<!-- - Fix for text annotation of `inspect_cat()` plots when labels are empty strings.  By default `""` will be shown.  Thanks to [Michael Swenson](https://github.com/mwswenson) for the [report](https://github.com/alastairrushworth/inspectdf/issues/12) -->
-
-<!-- - `inspect_cor(method = ...)` argument added.  Options for `pearson`, `spearman` and `kendall`. -->
-
-<!-- - Fix error when duplicate factor labels present in `inspect_cat()` & `inspect_imb()`. -->
+  - Fix issue causing `inspect_na() %>% show_plot()` to fail when 0 `NA`
+    present. Thanks to the
+    [report](https://github.com/alastairrushworth/inspectdf/issues/13)
+    by [Metin Yazici](https://github.com/strboul).
+  - `show_plot()` now returns a `ggplot2` object rather than printing
+    the plot - thanks to [Garrick
+    Aden-Buie](https://github.com/gadenbuie) for the
+    [suggestion](https://github.com/alastairrushworth/inspectdf/issues/14).
+  - Dramatic speed up of `inspect_cat` plotting by avoiding text labels
+    for small regions.
+  - Added `tech` dataset.
+  - Fix for text annotation of `inspect_cat()` plots when labels are
+    empty strings. By default `""` will be shown. Thanks to [Michael
+    Swenson](https://github.com/mwswenson) for the
+    [report](https://github.com/alastairrushworth/inspectdf/issues/12)
+  - `inspect_cor(method = ...)` argument added, thanks to suggestion
+    from (George Dontas)\[<https://github.com/gd047>\]. Options for
+    `pearson`, `spearman` and `kendall`. Note that confidence intervals
+    and tests currently only supported for `pearson`.
+  - Fix error when duplicate factor labels present in `inspect_cat()` &
+    `inspect_imb()`.
 
 # `inspectdf` 0.0.3
 
