@@ -1,4 +1,8 @@
-#' Summarise and compare the numeric variables within one or two dataframes
+#' Summary and comparison of numeric columns
+#' 
+#' @description For a single dataframe, summarise the numeric columns.  If two 
+#' dataframes are supplied, compare numeric columns appearing in both dataframes.  
+#' For grouped dataframes, summarise numeric columns separately for each group.
 #'
 #' @param df1 A dataframe.
 #' @param df2 An optional second dataframe for comparing categorical levels.  
@@ -13,38 +17,49 @@
 #' @return A \code{tibble} containing statistical summaries of the numeric 
 #' columns of \code{df1}, or comparing the histograms of \code{df1} and \code{df2}.
 #' @details 
-#' If only \code{df1} is specified, \code{inspect_num()} returns a tibble with columns
+#' For a \strong{single dataframe}, the tibble returned contains the columns: \cr
 #' \itemize{
 #'   \item \code{col_name}, a character vector containing the column names in \code{df1}
 #'   \item \code{min}, \code{q1}, \code{median}, \code{mean}, \code{q3}, \code{max} and 
-#'   \code{sd}: the minimum, lower quartile, median, mean, upper quartile, maximum and 
+#'   \code{sd}, the minimum, lower quartile, median, mean, upper quartile, maximum and 
 #'   standard deviation for each numeric column.
 #'   \item \code{pcnt_na}, the percentage of each numeric feature that is missing
 #'   \item \code{hist}, a named list of tibbles containing the relative frequency of values in a 
 #'   falling in bins determined by \code{breaks}.
-#' }
-#' If both \code{df1} and \code{df2} are specified, the tibble has columns
+#' } 
+#' For a \strong{pair of dataframes}, the tibble returned contains the columns: \cr
 #' \itemize{
-#'   \item \code{col_name} character vector containing the column names in \code{df1}
+#'   \item \code{col_name}, a character vector containing the column names in \code{df1}
 #'   and \code{df2}
-#'   \item \code{hist_1}, \code{hist_2} list column for histograms of each of \code{df1} and \code{df2}.
+#'   \item \code{hist_1}, \code{hist_2}, a list column for histograms of each of \code{df1} and \code{df2}.
 #'   Where a column appears in both dataframe, the bins used for \code{df1} are reused to 
 #'   calculate histograms for \code{df2}.
-#'   \item{jsd} numeric column containing the Jensen-Shannon divergence.  This measures the 
+#'   \item{jsd}, a numeric column containing the Jensen-Shannon divergence.  This measures the 
 #'   difference in distribution of a pair of binned numeric features.  Values near to 0 indicate
 #'   agreement of the distributions, while 1 indicates disagreement.
-#'   \item{fisher_p} p-value corresponding to Fisher's exact test.  A small p indicates 
+#'   \item{fisher_p}, the p-value corresponding to Fisher's exact test.  A small p indicates 
 #'   evidence that the two histograms are actually different.
 #' }
+#' For a \strong{grouped dataframe}, the tibble returned is as for a single dataframe, but where 
+#' the first \code{k} columns are the grouping columns.  There will be as many rows in the result 
+#' as there are unique combinations of the grouping variables.
+#' 
 #' @export
+#' @author Alastair Rushworth
+#' @seealso \code{\link{show_plot}}
+#' 
 #' @examples
-#' data("starwars", package = "dplyr")
-#' # show summary statistics for starwars
+#' # Load dplyr for starwars data & pipe
+#' library(dplyr)
+#' 
+#' # Single dataframe summary
 #' inspect_num(starwars)
-#' # with a visualisation too - try to limit number of bins
-#' inspect_num(starwars, breaks = 10)
-#' # compare two data frames
-#' inspect_num(starwars, starwars[-c(1:10), ], breaks = 10)
+#' 
+#' # Paired dataframe comparison
+#' inspect_num(starwars, starwars[1:20, ])
+#' 
+#' # Grouped dataframe summary
+#' starwars %>% group_by(gender) %>% inspect_num()
 #' @importFrom dplyr arrange
 #' @importFrom dplyr contains
 #' @importFrom dplyr desc
@@ -71,10 +86,11 @@ inspect_num <- function(df1, df2 = NULL, breaks = 20, include_int = TRUE, show_p
   # fish out breaks_seq, if supplied
   breakseq <- attr(df1, "breakseq")
   # perform basic column check on dataframe input
-  check_df_cols(df1, df2)
+  input_type <- check_df_cols(df1, df2)
   # capture the data frame names
   df_names <- get_df_names()
-  if(is.null(df2)){
+  # if only a single df input
+  if(input_type == "single"){
     # pick out numeric features
     df_num <- df1 %>% select_if(is.numeric)
     if(!include_int) df_num <- df_num %>% select_if(is.double)
@@ -139,9 +155,6 @@ inspect_num <- function(df1, df2 = NULL, breaks = 20, include_int = TRUE, show_p
         select(-breaks)
       # add feature names to the list
       names(out$hist) <-  as.character(out$col_name)
-      # attach attributes required for plotting
-      attr(out, "type") <- list(method = "num", 1)
-      attr(out, "df_names") <- df_names
     } else {
       out <- tibble(col_name = character(), min = numeric(), 
                     q1 = numeric(), median = numeric(), 
@@ -149,7 +162,8 @@ inspect_num <- function(df1, df2 = NULL, breaks = 20, include_int = TRUE, show_p
                     max = numeric(), sd = numeric(), 
                     pcnt_na = numeric(), hist = list())
     }
-  } else {
+  } 
+  if(input_type == "pair"){
     # get histogram and summaries for first df
     s1 <- inspect_num(df1, breaks = breaks, include_int = include_int) %>% 
       select(col_name, hist)
@@ -164,10 +178,28 @@ inspect_num <- function(df1, df2 = NULL, breaks = 20, include_int = TRUE, show_p
       mutate(jsd = js_divergence_vec(hist.x, hist.y)) %>%
       mutate(fisher_p = fisher(hist.x, hist.y, n_1 = nrow(df1), n_2 = nrow(df2))) %>%
       select(col_name, hist_1 = hist.x, hist_2 = hist.y,  jsd, fisher_p)
-    # attach attributes required for plotting
-    attr(out, "type") <- list(method = "num", 2)
-    attr(out, "df_names") <- df_names
   }
+  
+  if(input_type == "grouped"){
+    # get inspect_num on the ungrouped version
+    s_ug     <- inspect_num(df1 %>% ungroup)
+    # construct a breaks table from s_ug
+    brk_tab  <- tibble(col_name = s_ug$col_name, breaks = lapply(s_ug$hist, get_break))
+    # create a nested version of df1 - break into a list
+    out_nest <- df1 %>% nest()
+    grp_nms  <- attr(df1, "groups") %>% select(-ncol(.))
+    out_list <- vector("list", length = length(out_nest))
+    # loop over the subcomponents of out_nest
+    for(i in 1:length(out_nest$data)){
+      dfi <- out_nest$data[[i]]
+      attr(dfi, 'breakseq') <- brk_tab
+      out_list[[i]] <- inspect_num(dfi, include_int = include_int, show_plot = FALSE)
+    }
+    grp_nms$out_list <- out_list
+    out <- unnest(grp_nms, cols = c('out_list'))
+  }
+  attr(out, "type")     <- list(method = "num", input_type = input_type)
+  attr(out, "df_names") <- df_names
   if(show_plot) plot_deprecated(out)
   return(out)
 }

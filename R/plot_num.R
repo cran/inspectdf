@@ -6,51 +6,56 @@
 #' @importFrom ggplot2 ggplot
 #' @importFrom ggplot2 labs
 #' @importFrom ggplot2 scale_fill_gradient
+#' @importFrom ggplot2 scale_fill_gradientn
 #' @importFrom ggplot2 theme
+#' @importFrom tidyr unnest
 
-plot_num_1 <- function(df_plot, df_names, plot_layout, text_labels){
+plot_num_1 <- function(df_plot, df_names, plot_layout, text_labels, col_palette){
   # set the plot_layout if not specified
   if(is.null(plot_layout)) plot_layout <- list(NULL, 3)
-  # get bin midpoints for plotting
-  for(i in 1:length(df_plot$hist)){
-    # check first if the variable is completely missing
-    if(!(nrow(df_plot$hist[[i]]) == 1 & is.na(df_plot$hist[[i]]$value[1]))){
-      df_plot$hist[[i]]$col_name <- df_plot$col_name[i]
-      diff_nums <- lapply(strsplit(gsub("\\[|,|\\)", "", df_plot$hist[[i]]$value), " "), 
-                          function(v) diff(as.numeric(v))) %>% unlist %>% unique
-      df_plot$hist[[i]]$mid <- lapply(strsplit(gsub("\\[|,|\\)", "", df_plot$hist[[i]]$value), " "), 
-                                      function(v) diff(as.numeric(v))/2 + as.numeric(v)[1]) %>% unlist
-      if(is.nan(df_plot$hist[[i]]$mid[1]) | is.infinite(df_plot$hist[[i]]$mid[1])){
-        df_plot$hist[[i]]$mid[1] <- df_plot$hist[[i]]$mid[2] - (diff_nums[is.finite(diff_nums)])[1]
-      } 
-      last_n <- length(df_plot$hist[[i]]$mid)
-      if(is.nan(df_plot$hist[[i]]$mid[last_n]) | is.infinite(df_plot$hist[[i]]$mid[last_n])){
-        df_plot$hist[[i]]$mid[last_n] <- df_plot$hist[[i]]$mid[last_n - 1] + (diff_nums[is.finite(diff_nums)])[1]
-      }
-    } else {
-      df_plot$hist[[i]] <- NULL
-    }
-  }
+  # add histogram midpoints
+  df_plot <- add_midpoints(df_plot)
   df_plot <- bind_rows(df_plot$hist)
   bin_width <- df_plot %>% 
     group_by(col_name) %>%
     summarise(bar_width = diff(mid)[1]/1.5)
   df_plot <- df_plot %>% 
     left_join(bin_width, by = "col_name")
+  # add a colour scale variable in df_plot
+  # scale densities to have max of 1 and min 0
+  if(!is.na(col_palette)){
+    df_plot <- df_plot %>%
+      group_by(col_name) %>%
+      mutate(prop_z  = prop / max(prop)) %>%
+      ungroup
+  } else {
+    df_plot['prop_z'] = 'blue'
+  }
+
   # generate plot
   plt <- df_plot %>%
-    ggplot(aes(x = mid, y = prop, width = bar_width)) + 
-    geom_col(fill = "blue") + 
+    ggplot(aes(x = mid, y = prop, width = bar_width, fill = prop_z)) + 
+    geom_col() + 
     labs(x = "", y = "Probability", 
          title =  paste0("Histograms of numeric columns in df::", df_names$df1), 
          subtitle = "") +
-    facet_wrap(~ col_name, scales = "free", 
+    facet_wrap(~ col_name, 
+               scales = "free", 
                nrow = plot_layout[[1]], 
                ncol = plot_layout[[2]])
+  
+  if(!is.na(col_palette)){
+    plt <- plt + 
+      scale_fill_gradientn(colours = print_palette_pairs(col_palette)) +
+      theme(legend.position = "none")
+  } else {
+    plt <- plt + 
+      scale_fill_manual(values = 'blue') + 
+      theme(legend.position = "none")
+  }
   # print plot
   plt
 }
-
 
 
 plot_num_2 <- function(df_plot, df_names, plot_layout, text_labels, alpha){
@@ -127,3 +132,75 @@ plot_num_2 <- function(df_plot, df_names, plot_layout, text_labels, alpha){
                ncol = plot_layout[[2]])  
   plt
 }
+
+
+add_midpoints <- function(df_plot){
+  # get bin midpoints for plotting
+  for(i in 1:length(df_plot$hist)){
+    print(i)
+    # check first if the variable is completely missing
+    if(!(nrow(df_plot$hist[[i]]) == 1 & is.na(df_plot$hist[[i]]$value[1]))){
+      df_plot$hist[[i]]$col_name <- df_plot$col_name[i]
+      diff_nums <- lapply(strsplit(gsub("\\[|,|\\)", "", df_plot$hist[[i]]$value), " "), 
+                          function(v) diff(as.numeric(v))) %>% unlist %>% unique
+      df_plot$hist[[i]]$mid <- lapply(strsplit(gsub("\\[|,|\\)", "", df_plot$hist[[i]]$value), " "), 
+                                      function(v) diff(as.numeric(v))/2 + as.numeric(v)[1]) %>% unlist
+      if(is.nan(df_plot$hist[[i]]$mid[1]) | is.infinite(df_plot$hist[[i]]$mid[1])){
+        df_plot$hist[[i]]$mid[1] <- df_plot$hist[[i]]$mid[2] - (diff_nums[is.finite(diff_nums)])[1]
+      } 
+      last_n <- length(df_plot$hist[[i]]$mid)
+      if(is.nan(df_plot$hist[[i]]$mid[last_n]) | is.infinite(df_plot$hist[[i]]$mid[last_n])){
+        df_plot$hist[[i]]$mid[last_n] <- df_plot$hist[[i]]$mid[last_n - 1] + (diff_nums[is.finite(diff_nums)])[1]
+      }
+    } else {
+      df_plot$hist[[i]] <- NULL
+    }
+  }
+  return(df_plot)
+}
+
+
+plot_num_3 <- function(df_plot, df_names, plot_layout, text_labels, alpha, col_palette){
+  # set the plot_layout if not specified
+  if(is.null(plot_layout)) plot_layout <- list(NULL, 3)
+  # number of grouping columns
+  n_groups <- ncol(df_plot) - 10
+  # add the variable name to the histograms as an extra column
+  for(i in 1:nrow(df_plot)) df_plot$hist[[i]]$cname <- df_plot$col_name[i] 
+  df_plot <- bind_cols(
+    tibble( grouping = df_plot %>% select(1:n_groups) %>%
+              apply(., 1, paste, collapse = "-")), 
+    df_plot %>% 
+      select(-c(1:n_groups)))
+  # add histogram midpoints
+  df_plot <- add_midpoints(df_plot)
+
+  # unnest the histograms
+  df_hist <- df_plot %>% 
+    select(grouping, col_name, hist) %>%
+    unnest(hist) %>%
+    select(-col_name1)
+  colour_vector <- user_colours(length(unique(df_hist$grouping)), col_palette)
+  # plot the histograms as grouped freq polygons
+  plt <- df_hist %>%
+    ggplot(aes(x = mid, y = prop, colour = grouping)) +
+    geom_line(na.rm = TRUE) + 
+    scale_colour_manual(values = colour_vector) +
+    facet_wrap(~ col_name, 
+               scales = "free", 
+               nrow = plot_layout[[1]], 
+               ncol = plot_layout[[2]]) + 
+    labs(x = "", y = "Probability", 
+         title =  paste0("Histograms of numeric columns in df::", df_names$df1), 
+         subtitle = paste0("Split by grouping variable: ", colnames(df_plot)[1])) + 
+    theme(legend.position = "none") 
+  
+
+  
+  plt
+}
+
+
+
+
+

@@ -1,4 +1,16 @@
 
+# `inspectdf` 0.0.6.9000
+
+  - Updates to documentation throughout.
+  - `inspect_*` functions now returns results by group grouped
+    dataframes.
+  - Added option for `inspect_num() %>% show_plot()` to show histograms
+    with color palettes specified by the `col_palette` argument.
+  - Fixed bug causing `inspect_imb()` to sometimes fail when factors
+    present. Thanks to [Doug Friedman](https://github.com/doug-friedman)
+    for the
+    [report](https://github.com/alastairrushworth/inspectdf/issues/19).
+
 # `inspectdf` 0.0.5
 
   - Fixed error causing `inspect_num()` to fail when columns contained

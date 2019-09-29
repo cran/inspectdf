@@ -1,4 +1,7 @@
-#' Summarise and compare column types in one or two dataframes.
+#' Summary and comparison of column types
+#'
+#' @description For a single dataframe, summarise the column types.  If two 
+#' dataframes are supplied, compare column type composition of both dataframes.  
 #'
 #' @param df1 A dataframe.
 #' @param df2 An optional second dataframe for comparison.  
@@ -6,30 +9,39 @@
 #' Superseded by the function \code{show_plot()} and will be dropped in a future version.
 #' @return A tibble summarising the count and percentage of different 
 #' column types for one or a pair of data frames.
-#' @details When \code{df2 = NULL}, a tibble is returned with the columns
+#' @details 
+#' For a \strong{single dataframe}, the tibble returned contains the columns: \cr
 #' \itemize{
-#'   \item \code{type} character vector containing the column types in \code{df1}.
-#'   \item \code{cnt} integer counts of each type.
-#'   \item \code{pcnt} the percentage of all columns with each type.
-#'   \item \code{col_name} the names of columns with each type.
+#'   \item \code{type}, a character vector containing the column types in \code{df1}.
+#'   \item \code{cnt}, integer counts of each type.
+#'   \item \code{pcnt}, the percentage of all columns with each type.
+#'   \item \code{col_name}, the names of columns with each type. \cr
 #' }
-#' When a second data frame \code{df2} is specified, column type summaries 
-#' are tabulated for both data frames to enable comparison of contents. 
-#' The resulting tibble has the columns
+#' For a \strong{pair of dataframes}, the tibble returned contains the columns: \cr
 #' \itemize{
-#'   \item \code{type} character vector containing the column types in 
+#'   \item \code{type}, a character vector containing the column types in 
 #'   \code{df1} and \code{df2}.
-#'   \item \code{cnt_1}, \code{cnt_2} pair of integer columns containing counts of each type - 
+#'   \item \code{cnt_1}, \code{cnt_2}, pair of integer columns containing counts of each type - 
 #'   in each of \code{df1} and \code{df2}.
-#'   \item \code{pcnt_1}, \code{pcnt_2} pair of columns containing the percentage of 
+#'   \item \code{pcnt_1}, \code{pcnt_2}, pair of columns containing the percentage of 
 #'   columns with each type - the data frame name are appended.
 #' }
+#' For a \strong{grouped dataframe}, the tibble returned is as for a single dataframe, but where 
+#' the first \code{k} columns are the grouping columns.  There will be as many rows in the result 
+#' as there are unique combinations of the grouping variables.
+#' 
+#' @author Alastair Rushworth
+#' @seealso \code{\link{show_plot}}
+#' 
 #' @examples
-#' data("starwars", package = "dplyr")
-#' # get tibble of column types for the starwars data
+#' # Load dplyr for starwars data & pipe
+#' library(dplyr)
+#' 
+#' # Single dataframe summary
 #' inspect_types(starwars)
-#' # compare two data frames
-#' inspect_types(starwars, starwars[, -1])
+#' 
+#' # Paired dataframe comparison
+#' inspect_types(starwars, starwars[1:20, ])
 #' @export
 #' @importFrom dplyr arrange
 #' @importFrom dplyr case_when

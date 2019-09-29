@@ -2,7 +2,7 @@
 % Please edit documentation in R/inspect_num.R
 \name{inspect_num}
 \alias{inspect_num}
-\title{Summarise and compare the numeric variables within one or two dataframes}
+\title{Summary and comparison of numeric columns}
 \usage{
 inspect_num(df1, df2 = NULL, breaks = 20, include_int = TRUE,
   show_plot = FALSE)
@@ -28,39 +28,54 @@ A \code{tibble} containing statistical summaries of the numeric
 columns of \code{df1}, or comparing the histograms of \code{df1} and \code{df2}.
 }
 \description{
-Summarise and compare the numeric variables within one or two dataframes
+For a single dataframe, summarise the numeric columns.  If two 
+dataframes are supplied, compare numeric columns appearing in both dataframes.  
+For grouped dataframes, summarise numeric columns separately for each group.
 }
 \details{
-If only \code{df1} is specified, \code{inspect_num()} returns a tibble with columns
+For a \strong{single dataframe}, the tibble returned contains the columns: \cr
 \itemize{
   \item \code{col_name}, a character vector containing the column names in \code{df1}
   \item \code{min}, \code{q1}, \code{median}, \code{mean}, \code{q3}, \code{max} and 
-  \code{sd}: the minimum, lower quartile, median, mean, upper quartile, maximum and 
+  \code{sd}, the minimum, lower quartile, median, mean, upper quartile, maximum and 
   standard deviation for each numeric column.
   \item \code{pcnt_na}, the percentage of each numeric feature that is missing
   \item \code{hist}, a named list of tibbles containing the relative frequency of values in a 
   falling in bins determined by \code{breaks}.
-}
-If both \code{df1} and \code{df2} are specified, the tibble has columns
+} 
+For a \strong{pair of dataframes}, the tibble returned contains the columns: \cr
 \itemize{
-  \item \code{col_name} character vector containing the column names in \code{df1}
+  \item \code{col_name}, a character vector containing the column names in \code{df1}
   and \code{df2}
-  \item \code{hist_1}, \code{hist_2} list column for histograms of each of \code{df1} and \code{df2}.
+  \item \code{hist_1}, \code{hist_2}, a list column for histograms of each of \code{df1} and \code{df2}.
   Where a column appears in both dataframe, the bins used for \code{df1} are reused to 
   calculate histograms for \code{df2}.
-  \item{jsd} numeric column containing the Jensen-Shannon divergence.  This measures the 
+  \item{jsd}, a numeric column containing the Jensen-Shannon divergence.  This measures the 
   difference in distribution of a pair of binned numeric features.  Values near to 0 indicate
   agreement of the distributions, while 1 indicates disagreement.
-  \item{fisher_p} p-value corresponding to Fisher's exact test.  A small p indicates 
+  \item{fisher_p}, the p-value corresponding to Fisher's exact test.  A small p indicates 
   evidence that the two histograms are actually different.
 }
+For a \strong{grouped dataframe}, the tibble returned is as for a single dataframe, but where 
+the first \code{k} columns are the grouping columns.  There will be as many rows in the result 
+as there are unique combinations of the grouping variables.
 }
 \examples{
-data("starwars", package = "dplyr")
-# show summary statistics for starwars
+# Load dplyr for starwars data & pipe
+library(dplyr)
+
+# Single dataframe summary
 inspect_num(starwars)
-# with a visualisation too - try to limit number of bins
-inspect_num(starwars, breaks = 10)
-# compare two data frames
-inspect_num(starwars, starwars[-c(1:10), ], breaks = 10)
+
+# Paired dataframe comparison
+inspect_num(starwars, starwars[1:20, ])
+
+# Grouped dataframe summary
+starwars \%>\% group_by(gender) \%>\% inspect_num()
+}
+\seealso{
+\code{\link{show_plot}}
+}
+\author{
+Alastair Rushworth
 }

@@ -1,5 +1,10 @@
-#' Summarise and compare the memory usage in one or two dataframes.
+#' Summary and comparison of memory usage of dataframe columns 
 #'
+#' @description For a single dataframe, summarise the memory usage in each column. 
+#' If two dataframes are supplied, compare memory usage for columns appearing 
+#' in both dataframes.  For grouped dataframes, summarise the memory usage separately 
+#' for each group.
+#' 
 #' @param df1 A data frame.
 #' @param df2 An optional second data frame with which to comparing memory usage.  
 #' Defaults to \code{NULL}.
@@ -7,31 +12,43 @@
 #' Superseded by the function \code{show_plot()} and will be dropped in a future version.
 #' @return A tibble summarising and comparing the columnwise memory usage 
 #' for one or a pair of data frames.
-#' @details When \code{df1} is specified and \code{df2 = NULL}, a tibble summarising 
-#' columnwise memory usage in descending order of size is returned:
+#' @details 
+#' For a \strong{single dataframe}, the tibble returned contains the columns: \cr
 #' \itemize{
-#'   \item \code{col_name}   character vector containing column names of \code{df1}.
-#'   \item \code{size}  character vector containing display-friendly memory usage of each column.
-#'   \item \code{pcnt}  the percentage of the dataframe's total memory footprint 
+#'   \item \code{col_name}, a character vector containing column names of \code{df1}.
+#'   \item \code{size}, a character vector containing display-friendly memory usage of each column.
+#'   \item \code{pcnt}, the percentage of the dataframe's total memory footprint 
 #'   used by each column.
 #' }
-#' When both \code{df1} and \code{df2} are specified, column memory usages are jointly 
-#' tabulated for both data frames.  Rows are sorted in descending order of size as 
-#' they appear in \code{df1}:
+#' For a \strong{pair of dataframes}, the tibble returned contains the columns: \cr
 #' \itemize{
-#'   \item \code{col_name} character vector containing column names of \code{df1}
+#'   \item \code{col_name}, a character vector containing column names of \code{df1}
 #'   and \code{df2}.
-#'   \item \code{size_1}, \code{size_2} character vector containing memory usage of each column in
+#'   \item \code{size_1}, \code{size_2}, a character vector containing memory usage of each column in
 #'   each of \code{df1} and \code{df2}.
-#'   \item \code{pcnt_1}, \code{pcnt_2} the percentage of total memory usage of each column within 
+#'   \item \code{pcnt_1}, \code{pcnt_2}, the percentage of total memory usage of each column within 
 #'   each of \code{df1} and \code{df2}.
 #' }
+#' For a \strong{grouped dataframe}, the tibble returned is as for a single dataframe, but where 
+#' the first \code{k} columns are the grouping columns.  There will be as many rows in the result 
+#' as there are unique combinations of the grouping variables.
+#' 
+#' @export
+#' @author Alastair Rushworth
+#' @seealso \code{\link{show_plot}}
+#' 
 #' @examples
-#' data("starwars", package = "dplyr")
-#' # get tibble of column memory usage for the starwars data
+#' # Load dplyr for starwars data & pipe
+#' library(dplyr)
+#' 
+#' # Single dataframe summary
 #' inspect_mem(starwars)
-#' # compare memory usage 
-#' inspect_mem(starwars, starwars[1:10, -3])
+#' 
+#' # Paired dataframe comparison
+#' inspect_mem(starwars, starwars[1:20, ])
+#' 
+#' # Grouped dataframe summary
+#' starwars %>% group_by(gender) %>% inspect_mem()
 #' @importFrom dplyr arrange
 #' @importFrom dplyr contains
 #' @importFrom dplyr desc
@@ -45,12 +62,11 @@
 #' @importFrom dplyr ungroup
 #' @importFrom magrittr %>%
 #' @importFrom tibble tibble
-#' @export
 
 inspect_mem <- function(df1, df2 = NULL, show_plot = FALSE){
   
   # perform basic column check on dataframe input
-  check_df_cols(df1)
+  input_type <- check_df_cols(df1, df2)
   
   # capture the data frame names
   df_names <- get_df_names()
@@ -61,7 +77,8 @@ inspect_mem <- function(df1, df2 = NULL, show_plot = FALSE){
                 ncl_1 = ncol(df1), ncl_2 = ncol(df2), 
                 nrw_1 = nrow(df1), nrw_2 = nrow(df2))
   
-  if(is.null(df2)){
+  # if only a single df input
+  if(input_type == "single"){
     # col_space vectors
     names_vec <- colnames(df1)
     col_space <- vector("list", length = sizes$ncl_1)
@@ -86,24 +103,21 @@ inspect_mem <- function(df1, df2 = NULL, show_plot = FALSE){
       arrange(desc(pcnt)) %>%
       rename(col_name = names, size = n.y) %>% 
       select(-n.x)
-    
-    # attach attributes required for plotting
-    attr(out, "type") <- list(method = "mem", 1)
-    attr(out, "df_names") <- df_names
-    attr(out, "sizes") <- sizes
-  } else {
+  }
+  if(input_type == "pair"){
     # get the space report for both input dfs
     df1 <- inspect_mem(df1)
     df2 <- inspect_mem(df2)
     out <- full_join(df1, df2, by = "col_name") %>%
       select(col_name, contains("size"), contains("pcnt"))
     colnames(out)[2:5] <- c("size_1", "size_2", "pcnt_1", "pcnt_2")
-    
-    # attach attributes required for plotting
-    attr(out, "type") <- list(method = "mem", 2)
-    attr(out, "df_names") <- df_names
-    attr(out, "sizes") <- sizes
   }
+  if(input_type == "grouped"){
+    out <- apply_across_groups(df = df1, fn = inspect_mem)
+  }
+  attr(out, "type")     <- list(method = "mem", input_type = input_type)
+  attr(out, "df_names") <- df_names
+  attr(out, "sizes")    <- sizes
   if(show_plot) plot_deprecated(out)
   return(out)
 }
