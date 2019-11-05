@@ -1,5 +1,16 @@
 
-# `inspectdf` 0.0.6.9000
+# `inspectdf` 0.0.7
+
+  - Added `bytes` column to `inspect_mem()` output, for downstream
+    numeric comparison and consistency with `inspectpd`.
+  - Added `pcnt_nna` column to `inspect_cor()` output containing the
+    percentage of pairwise complete observations used calculated
+    correlations. Thanks to Theo Broekman for the suggestion.
+  - Fixed bug causing order of grouping variable in grouped `inspect_`
+    statements to be incorrect. Thanks to the report from Theo Broekman.
+  - Removed erroneous print statement from `inspect_num()`.
+
+# `inspectdf` 0.0.6
 
   - Updates to documentation throughout.
   - `inspect_*` functions now returns results by group grouped
@@ -40,7 +51,7 @@
     Swenson](https://github.com/mwswenson) for the
     [report](https://github.com/alastairrushworth/inspectdf/issues/12)
   - `inspect_cor(method = ...)` argument added, thanks to suggestion
-    from (George Dontas)\[<https://github.com/gd047>\]. Options for
+    from [George Dontas](https://github.com/gd047). Options for
     `pearson`, `spearman` and `kendall`. Note that confidence intervals
     and tests currently only supported for `pearson`.
   - Fix error when duplicate factor labels present in `inspect_cat()` &
