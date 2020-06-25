@@ -2,10 +2,9 @@
 % Please edit documentation in R/inspect_cor.R
 \name{inspect_cor}
 \alias{inspect_cor}
-\title{Summarise and compare Pearson's correlation coefficients for numeric columns in one or two dataframes.}
+\title{Tidy correlation coefficients for numeric dataframe columns}
 \usage{
-inspect_cor(df1, df2 = NULL, method = "pearson", with_col = NULL,
-  alpha = 0.05, show_plot = FALSE)
+inspect_cor(df1, df2 = NULL, method = "pearson", with_col = NULL, alpha = 0.05)
 }
 \arguments{
 \item{df1}{A data frame.}
@@ -20,16 +19,14 @@ of \code{"pearson"}, \code{"kendall"}, or \code{"spearman"}, which can be abbrev
 features.  The default \code{with_col = NULL} returns all pairs of correlations.}
 
 \item{alpha}{Alpha level for correlation confidence intervals.  Defaults to 0.05.}
-
-\item{show_plot}{(Deprecated) Logical flag indicating whether a plot should be shown.
-Superseded by the function \code{show_plot()} and will be dropped in a future version.}
 }
 \value{
 A tibble summarising and comparing the correlations for each numeric column 
 in one or a pair of data frames.
 }
 \description{
-Summarise and compare Pearson's correlation coefficients for numeric columns in one or two dataframes.
+Summarise and compare Pearson, Kendall and Spearman correlations for 
+numeric columns in one, two or grouped dataframes.
 }
 \details{
 When \code{df2 = NULL}, a tibble containing correlation coefficients for \code{df1} is 

@@ -7,7 +7,7 @@
 #' @importFrom ggplot2 scale_colour_manual
 plot_cat <- function(levels_df, df_names, text_labels, high_cardinality, 
                      cols = c("tomato3", "gray65", "darkmagenta"), 
-                     col_palette, label_thresh){
+                     col_palette, label_thresh, label_color, label_angle, label_size){
   # min_freq label
   min_freq_label <- paste0("High cardinality")
 
@@ -116,7 +116,8 @@ plot_cat <- function(levels_df, df_names, text_labels, high_cardinality,
     ggplot(aes(x = col_name, y = prop, fill = new_level_key)) +
     geom_bar(stat = "identity", position = "stack", colour = "black", size = 0.2) +
     scale_fill_manual(values = colour_vector) +
-    guides(fill = FALSE) + 
+    #guides(fill = FALSE) + 
+    theme(legend.position='none') + 
     coord_flip() +
     theme(axis.title.y = element_blank(), panel.background = element_blank(),
           axis.ticks.y = element_blank(), panel.border = element_blank(), 
@@ -161,8 +162,16 @@ plot_cat <- function(levels_df, df_names, text_labels, high_cardinality,
       return(tidyr::unnest(lvldf_grp, cols = data))
     }
     
-    lvl_df4 <- lvl_df3 %>% sum_small_cats(prop_thresh = label_thresh)
-
+    lvl_df4     <- lvl_df3 %>% sum_small_cats(prop_thresh = label_thresh)
+    label_color <- if(is.null(label_color)){
+      c("white", "gray55")
+    } else {
+      if(length(label_color) == 1){
+        c(label_color, label_color)
+      } else {
+        label_color
+      }
+    }
     plt <- plt + 
       suppressWarnings(
         ggfittext::geom_fit_text(
@@ -183,7 +192,7 @@ plot_cat <- function(levels_df, df_names, text_labels, high_cardinality,
           show.legend = FALSE
         ) 
       ) + 
-      scale_colour_manual(values = c("white", "gray55"))
+      scale_colour_manual(values = label_color)
   }
   
   # if this is a comparison, then add x-axis labels and descriptive title

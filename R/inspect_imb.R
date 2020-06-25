@@ -3,20 +3,19 @@
 #' @description For a single dataframe, summarise the most common level in each 
 #' categorical column. If two dataframes are supplied, compare the most common 
 #' levels of categorical features appearing in both dataframes.  For grouped 
-#' dataframes, summarise the levels of categorical features separately for each group.
+#' dataframes, summarise the levels of categorical columns in the dataframe
+#' split by group.
 #'
 #' @param df1 A dataframe.
 #' @param df2 An optional second data frame for comparing columnwise imbalance.  
 #' Defaults to \code{NULL}.  
 #' @param include_na Logical flag, whether to include missing values as a unique level.  Default
 #' is \code{FALSE} - to ignore \code{NA} values.
-#' @param show_plot (Deprecated) Logical flag indicating whether a plot should be shown.  
-#' Superseded by the function \code{show_plot()} and will be dropped in a future version.
-#' @return  A tibble summarising and comparing the imbalance for each non-numeric column 
-#' in one or a pair of data frames.
+#' @return  A tibble summarising and comparing the imbalance for each categorical column 
+#' in one or a pair of dataframes.
 #' 
 #' @details 
-#' #' For a \strong{single dataframe}, the tibble returned contains the columns: \cr
+#' For a \strong{single dataframe}, the tibble returned contains the columns: \cr
 #' \itemize{
 #'   \item \code{col_name}, a character vector containing column names of \code{df1}.
 #'   \item \code{value}, a character vector containing the most common categorical level 
@@ -32,10 +31,13 @@
 #'   and \code{df2}.
 #'   \item \code{value}, a character vector containing the most common categorical level 
 #'   in each column of \code{df1}.  
-#'   \item \code{pcnt_}, the percentage of each column's entries occupied by the level in
-#'   \code{value} column.
-#'   \item \code{cnt_}, the number of occurrences of the most common categorical level in each
-#'   column of \code{df1} and \code{df2}.
+#'   \item \code{pcnt_1}, \code{pcnt_2}, the percentage occurrence of \code{value} in 
+#'   the column \code{col_name} for each of \code{df1} and \code{df2}, respectively.
+#'   \item \code{cnt_1}, \code{cnt_2}, the number of occurrences of of \code{value} in 
+#'   the column \code{col_name} for each of \code{df1} and \code{df2}, respectively.
+#'   \item \code{p_value}, p-value associated with the null hypothesis that the true rate of 
+#'   occurrence is the same for both dataframes.  Small values indicate stronger evidence of a difference
+#'   in the rate of occurrence.
 #' }
 #' For a \strong{grouped dataframe}, the tibble returned is as for a single dataframe, but where 
 #' the first \code{k} columns are the grouping columns.  There will be as many rows in the result 
@@ -68,15 +70,12 @@
 #' @importFrom dplyr slice
 #' @importFrom magrittr %>%
 
-inspect_imb <- function(df1, df2 = NULL, show_plot = FALSE, include_na = FALSE){
+inspect_imb <- function(df1, df2 = NULL, include_na = FALSE){
   
   # perform basic column check on dataframe input
   input_type <- check_df_cols(df1, df2)
-  # perform basic column check on dataframe input
-  check_df_cols(df1)
   # capture the data frame names
   df_names <- get_df_names()
-  
   if(input_type == "single"){
     # pick out categorical columns
     df_cat <- df1 %>% 
@@ -85,14 +84,14 @@ inspect_imb <- function(df1, df2 = NULL, show_plot = FALSE, include_na = FALSE){
     # calculate imbalance if any columns available
     if(n_cols > 0){
       # check any factors for duplicate labels
-      df_cat <- check_factors(df_cat)
+      df_cat    <- check_factors(df_cat)
       names_cat <- colnames(df_cat)
       # function to find the percentage of the most common value in a vector
       levels_list <- vector("list", length = n_cols)
       pb <- start_progress(prefix = " Column", total = n_cols)
       for(i in 1:n_cols){
         update_progress(bar = pb, iter = i, total = n_cols, what = names_cat[i])
-        full_tab <- fast_table(df_cat[[i]], show_cnt = TRUE, show_na = include_na)
+        full_tab  <- fast_table(df_cat[[i]], show_cnt = TRUE, show_na = include_na)
         first_row <- full_tab %>% slice(1)
         if(nrow(first_row) == 0){
           first_row <- tibble(value = "empty", prop = 0, cnt = as.integer(0))
@@ -133,6 +132,5 @@ inspect_imb <- function(df1, df2 = NULL, show_plot = FALSE, include_na = FALSE){
   # attach attributes required for plotting
   attr(out, "type")     <- list(method = "imb", input_type = input_type)
   attr(out, "df_names") <- df_names
-  if(show_plot) plot_deprecated(out)
   return(out)
 }

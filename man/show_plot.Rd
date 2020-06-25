@@ -2,75 +2,94 @@
 % Please edit documentation in R/show_plot.R
 \name{show_plot}
 \alias{show_plot}
-\title{Visualise summaries and comparisons of one or two dataframes.}
+\title{Simple graphical inspection of dataframe summaries}
 \usage{
-show_plot(x, text_labels = TRUE, alpha = 0.05, high_cardinality = 0,
-  plot_layout = NULL, col_palette = 0, plot_type = "bar",
-  label_thresh = 0.1)
+show_plot(
+  x,
+  text_labels = TRUE,
+  alpha = 0.05,
+  high_cardinality = 0,
+  plot_layout = NULL,
+  col_palette = 0,
+  plot_type = 1,
+  label_thresh = 0.1,
+  label_angle = NULL,
+  label_color = NULL,
+  label_size = NULL
+)
 }
 \arguments{
-\item{x}{Dataframe resulting from a call to an `inspect_` function.}
+\item{x}{Dataframe resulting from a call to an \code{inspect_*()} function.}
 
-\item{text_labels}{Whether to show text annotation on plots (when \code{show_plot = T}).}
+\item{text_labels}{Boolean.  Whether to show text annotation on plots.  Defaults to \code{TRUE}.}
 
-\item{alpha}{Alpha level for performing significance tests.  Defaults to 0.05.}
+\item{alpha}{Alpha level for performing any significance tests.  Defaults to 0.05.}
 
 \item{high_cardinality}{Minimum number of occurrences of category to be shown as a distinct segment 
-in the plot (\code{inspect_cat} only).  Default is 0.  This can help when some columns 
-contain many unique or near-unique levels that take a long time to render.}
+in the plot (\code{inspect_cat()} only).  Default is 0 - all distinct levels are shown.  Setting 
+\code{high_cardinality > 0} can speed up plot rendering when categorical columns contain 
+many near-unique values.}
 
 \item{plot_layout}{Vector specifying the number of rows and columns 
 in the plotting grid.  For example, 3 rows and 2 columns would be specified as 
-\code{plot_layout = c(3, 2)}.
-Default is \code{TRUE}.}
+\code{plot_layout = c(3, 2)}.}
 
-\item{col_palette}{Integer indicating the colour palette to use.
+\item{col_palette}{Integer indicating the colour palette to use:
+\itemize{
+\item \code{0}: (default) `ggplot2` color palette
+\item \code{1}: a \href{http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/}{colorblind friendly palette}
+\item \code{2}: \href{https://www.color-hex.com/color-palette/25888}{80s theme}
+\item \code{3}: \href{https://www.color-hex.com/color-palette/79261}{rainbox theme}
+\item \code{4}: \href{https://www.color-hex.com/color-palette/78663}{mario theme}
+\item \code{5}: \href{https://www.color-hex.com/color-palette/78664}{pokemon theme}
+}}
 
- - `0`: (default) `ggplot2` color palette
- - `1`: a [colorblind friendly palette](http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/)
- - `2`: [80s theme](https://www.color-hex.com/color-palette/25888)
- - `3`: [rainbox theme](https://www.color-hex.com/color-palette/79261)
- - `4`: [mario theme](https://www.color-hex.com/color-palette/78663)
- - `5`: [pokemon theme](https://www.color-hex.com/color-palette/78664)}
+\item{plot_type}{Experimental.  Integer determining plot type to print.  Defaults to 1.}
 
-\item{plot_type}{String determining the type of plot to show.  Defaults to `"bar"`.}
+\item{label_thresh}{(\code{inspect_cat()} only.  Minimum occurrence frequency of category for 
+a text label to be shown.  Smaller values of \code{label_thresh} will show labels 
+for less common categories but at the expense of increased plot rendering time.  Defaults to 0.1.}
 
-\item{label_thresh}{Minimum percentage frequency of category for a text label to be shown.
-Defaults to 0.1.  Smaller values will show potentially smaller labels, but at the expense of longer
-rendering time.}
+\item{label_angle}{Numeric value specifying angle with which to rotate text annotation, 
+if applicable.  Defaults to 90 for most plots.}
+
+\item{label_color}{Character string or character vector specifying colors for text annotation, 
+if applicable.  Usually defaults to white and gray.}
+
+\item{label_size}{Numeric value specifying font size for text annotation, if applicable.}
 }
 \description{
-Visualise summaries and comparisons of one or two dataframes.
+Easily visualise output from \code{inspect_*()} functions.
 }
 \examples{
 # Load 'starwars' data
 data("starwars", package = "dplyr")
 
-# categorical plot
+# Horizontal bar plot for categorical column composition
 x <- inspect_cat(starwars) 
 show_plot(x)
 
-# correlations in numeric columns
+# Correlation betwee numeric columns + confidence intervals
 x <- inspect_cor(starwars)
 show_plot(x)
 
-# feature imbalance bar plot
+# Bar plot of most frequent category for each categorical column
 x <- inspect_imb(starwars)
 show_plot(x)
 
-# memory usage barplot
+# Bar plot showing memory usage for each column
 x <- inspect_mem(starwars)
 show_plot(x)
 
-# missingness barplot
+# Occurence of NAs in each column ranked in descending order
 x <- inspect_na(starwars)
 show_plot(x)
 
-# histograms for numeric columns
+# Histograms for numeric columns
 x <- inspect_num(starwars)
 show_plot(x)
 
-# barplot of column types
+# Barplot of column types
 x <- inspect_types(starwars)
 show_plot(x)
 }
