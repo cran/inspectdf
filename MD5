@@ -1,6 +1,6 @@
-834abb9dbd7d40c7a583d1b5056d81da *DESCRIPTION
+f6211187c06d19cf5c5bac41412bc2ac *DESCRIPTION
 2b61750ed9ab5dea9ac2994f7ea89f34 *NAMESPACE
-53f20f881cb450a88008f39962263cf6 *NEWS.md
+75d61d3b4e8a76cebd889c39ff6a39ec *NEWS.md
 31e3728fe4b6ff4f70acd0c257a81fa7 *R/RcppExports.R
 b19619590c1eb2cbb3e3f0d424cfb76c *R/add_annotation_to_bars.R
 c37bbfe3568ea6396f069746065bbeb1 *R/apply_across_groups.R
@@ -24,12 +24,12 @@ dbf5cb0929f8c0c148a911b19ae5e632 *R/inspect_cor.R
 ef5bb0cdaf938a94c082a47ba4e61b56 *R/inspect_num.R
 c38ec691a4f2f791de4ae6749102c27d *R/inspect_types.R
 a1bda25b66d62a0ada2ab2e0dbaaef7e *R/js_divergence_vec.R
-7a9a6b8b81e0a5045da64f12058b3383 *R/n_in.R
+fd376358786d2e713773546587dacfdd *R/n_in.R
 ebae06c6ab16a56a956ae2e3266cf1ad *R/palletes.R
-fd944393e7a786677d2b3473ca96c9b8 *R/plot_cat.R
+31d409734e52d4a0158b3a7edf1a9f21 *R/plot_cat.R
 6dd08ae26781993463019ca9545252a0 *R/plot_cor.R
 b05982b5a9dcf3ade2ea535395695481 *R/plot_grouped.R
-fa566f6134d74f4899d27dde348666c1 *R/plot_imb.R
+3556175199310581ad356e9d02f204b9 *R/plot_imb.R
 27cd0d2b6bc83654c0149ddca6792d8e *R/plot_mem.R
 fe6e3579706528d541505c85c8ac4749 *R/plot_na.R
 0a6789e25589858d0759aa2bf4cf05fa *R/plot_num.R

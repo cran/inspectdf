@@ -1,6 +1,6 @@
 Package: inspectdf
 Title: Inspection, Comparison and Visualisation of Data Frames
-Version: 0.0.8
+Version: 0.0.9
 Authors@R: c(
     person("Alastair", "Rushworth", email = "alastairmrushworth@gmail.com", role = c("aut", "cre")),
     person("David", "Wilkins", email = "david@wilkox.org", role = "ctb")
@@ -15,15 +15,15 @@ ByteCompile: yes
 Encoding: UTF-8
 Depends: R (>= 3.1.0)
 Imports: dplyr, ggplot2, magrittr, progress, Rcpp, tibble, tidyr,
-        ggfittext (>= 0.8.0)
+        ggfittext
 Suggests: testthat
 License: GPL-2
 URL: https://alastairrushworth.github.io/inspectdf/
-BugReports: http://github.com/alastairrushworth/inspectdf/issues
-RoxygenNote: 7.1.0
+BugReports: https://github.com/alastairrushworth/inspectdf/issues
+RoxygenNote: 7.1.1
 NeedsCompilation: yes
-Packaged: 2020-06-25 13:37:53 UTC; alastairrushworth
+Packaged: 2020-09-07 13:57:20 UTC; alastairrushworth
 Author: Alastair Rushworth [aut, cre],
   David Wilkins [ctb]
 Repository: CRAN
-Date/Publication: 2020-06-25 14:30:02 UTC
+Date/Publication: 2020-09-07 14:20:08 UTC

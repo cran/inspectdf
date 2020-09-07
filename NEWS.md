@@ -1,5 +1,9 @@
 
-# `inspectdf` 0.0.8.9000
+# `inspectdf` 0.0.9
+
+  - Minor change, ensuring all functions use `return` properly.
+
+# `inspectdf` 0.0.8
 
   - **Important change:** the `show_plot` argument has been removed from
     all `inspect_*()` functions. To generate visualisations of data
