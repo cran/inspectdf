@@ -4,13 +4,15 @@
 \alias{inspect_cat}
 \title{Summary and comparison of the levels in categorical columns}
 \usage{
-inspect_cat(df1, df2 = NULL)
+inspect_cat(df1, df2 = NULL, include_int = FALSE)
 }
 \arguments{
 \item{df1}{A dataframe.}
 
 \item{df2}{An optional second data frame for comparing categorical levels.
 Defaults to \code{NULL}.}
+
+\item{include_int}{Logical flag - whether to treat integer columns as categories.  Default is \code{FALSE}.}
 }
 \value{
 A tibble summarising or comparing the categorical features 
@@ -40,8 +42,9 @@ For a \strong{pair of dataframes}, the tibble returned contains the columns: \cr
   \item \code{jsd}, a numeric column containing the Jensen-Shannon divergence.  This measures the 
   difference in relative frequencies of levels in a pair of categorical features.  Values near 
   to 0 indicate agreement of the distributions, while 1 indicates disagreement.
-  \item \code{fisher_p}, the p-value corresponding to Fisher's exact test.  A small p indicates 
-  evidence that the the two sets of relative frequencies are actually different.
+  \item \code{pval}, the p-value corresponding to a NHT that the true frequencies of the categories are equal.
+  A small p indicates evidence that the the two sets of relative frequencies are actually different.  The test
+  is based on a modified Chi-squared statistic.
   \item \code{lvls_1}, \code{lvls_2}, the relative frequency of levels in each of \code{df1} and \code{df2}.
 }
 For a \strong{grouped dataframe}, the tibble returned is as for a single dataframe, but where 

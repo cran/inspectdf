@@ -8,6 +8,7 @@
 #' @param df1 A dataframe.
 #' @param df2 An optional second data frame for comparing categorical levels.  
 #' Defaults to \code{NULL}.
+#' @param include_int Logical flag - whether to treat integer columns as categories.  Default is \code{FALSE}.
 #' @return A tibble summarising or comparing the categorical features 
 #' in one or a pair of dataframes.
 #' 
@@ -29,8 +30,9 @@
 #'   \item \code{jsd}, a numeric column containing the Jensen-Shannon divergence.  This measures the 
 #'   difference in relative frequencies of levels in a pair of categorical features.  Values near 
 #'   to 0 indicate agreement of the distributions, while 1 indicates disagreement.
-#'   \item \code{fisher_p}, the p-value corresponding to Fisher's exact test.  A small p indicates 
-#'   evidence that the the two sets of relative frequencies are actually different.
+#'   \item \code{pval}, the p-value corresponding to a NHT that the true frequencies of the categories are equal.
+#'   A small p indicates evidence that the the two sets of relative frequencies are actually different.  The test
+#'   is based on a modified Chi-squared statistic.
 #'   \item \code{lvls_1}, \code{lvls_2}, the relative frequency of levels in each of \code{df1} and \code{df2}.
 #' }
 #' For a \strong{grouped dataframe}, the tibble returned is as for a single dataframe, but where 
@@ -69,7 +71,7 @@
 #' @importFrom progress progress_bar
 #' @importFrom Rcpp compileAttributes
 
-inspect_cat <- function(df1, df2 = NULL){
+inspect_cat <- function(df1, df2 = NULL, include_int = FALSE){
   
   # perform basic column check on dataframe input
   input_type <- check_df_cols(df1, df2)
@@ -79,10 +81,13 @@ inspect_cat <- function(df1, df2 = NULL){
   # if only a single df input
   if(input_type == "single"){
     # pick out categorical columns
+    # is.date_or_time <- function(v) 
+    col_cats <- function(v) is.character(v) |  is.factor(v) | is.logical(v) | any(c("Date", "datetime") %in% class(v))
+    if(include_int) col_cats <- function(v) is.character(v) |  is.factor(v) | is.logical(v) | any(c("Date", "datetime") %in% class(v)) | is.integer(v)
     df_cat <- df1 %>% 
-      select_if(function(v) is.character(v) | is.factor(v) | 
-                  is.logical(v) | any(c("Date", "datetime") %in% class(v))) %>%
-      mutate_if(is.factor, as.character)
+      select_if(col_cats) %>%
+      mutate_if(is.factor, as.character) %>%
+      mutate_if(is.integer, as.character)
   
     # calculate association if categorical columns exist
     if(ncol(df_cat) > 0){
@@ -135,10 +140,8 @@ inspect_cat <- function(df1, df2 = NULL){
     # combine and clean up levels
     out <- full_join(s1, s2, by = "col_name") %>% 
       mutate(jsd = js_divergence_vec(levels.x, levels.y)) %>%
-      mutate(fisher_p = fisher(levels.x, levels.y, n_1 = nrow(df1), 
-                               n_2 = nrow(df2))) %>%
-      select(col_name, jsd, fisher_p, lvls_1 = levels.x, lvls_2 = levels.y)
-    
+      mutate(pval = chisq(levels.x, levels.y, n_1 = nrow(df1), n_2 = nrow(df2))) %>%
+      select(col_name, jsd, pval, lvls_1 = levels.x, lvls_2 = levels.y)
     # ensure the list names are retained
     names(out[[4]]) <- names(out[[5]]) <- as.character(out$col_name)
   }
@@ -149,3 +152,4 @@ inspect_cat <- function(df1, df2 = NULL){
   attr(out, "df_names") <- df_names
   return(out)
 }
+
