@@ -1,6 +1,6 @@
-90e4e8bc9f1b25ae3575488bcc81d0e2 *DESCRIPTION
-801d1257155067d28bccb36ab6080030 *NAMESPACE
-ad202cff654476b76acfd26382cae642 *NEWS.md
+82e9db0852552bfe9882b3059cb5f291 *DESCRIPTION
+7433b07e8116a928bb83dcd8107ac280 *NAMESPACE
+21e00f11246a49db1c632055b1d75f62 *NEWS.md
 31e3728fe4b6ff4f70acd0c257a81fa7 *R/RcppExports.R
 62358dbd485dfa65bf74748acb70da61 *R/add_annotation_to_bars.R
 c37bbfe3568ea6396f069746065bbeb1 *R/apply_across_groups.R
@@ -32,11 +32,11 @@ fbebfd457edc014e9d9347746ee06607 *R/plot_imb.R
 7b74e2713df028e939cef39a3350c1ad *R/plot_mem.R
 972829a95bb8e0e1bfca08a47e4cb9d3 *R/plot_na.R
 3bd495b1bea4eeef0d6e2f04b2b1261f *R/plot_num.R
-f73ee59e82fcb1a6be63a8d4e4690e1c *R/plot_types.R
+f2c5362f3beb572adb513a68fe0b1140 *R/plot_types.R
 ed1495a39d06578d87afc0b74752d987 *R/progress.R
 25dd4f3820201fe32794a5604de3b742 *R/prop_test.R
 cc2d66cf9617efa83a0a9c78e08daf84 *R/prop_value.R
-2ec1b9d2f6f50104738691a5a3ba36ed *R/show_plot.R
+aa2f8a566251455f1e61af3784b072cf *R/show_plot.R
 bba6502a6348dd57cd2cf18f89130374 *R/sumna.R
 63300a08cc1ccdda6d9e23523dd82a26 *R/tech-data.R
 3474f15c05c4019691e5a1dd6e7d8895 *R/vec_to_tibble.R
@@ -50,7 +50,7 @@ fc5b3a8bb6d3f720492c371542619b0f *man/inspect_imb.Rd
 26eec70044b830e04581ead2b1ecb20d *man/inspect_na.Rd
 e04cc17d285574fe3db9afbfb5ce7dbd *man/inspect_num.Rd
 9f7e1a5efb3327e192eb64a8bf81dafc *man/inspect_types.Rd
-20fc20594fab103312a201661a3def43 *man/show_plot.Rd
+26bbc0c3952306d16f637875dda9f172 *man/show_plot.Rd
 e87aa964411d784d28a461ae009aa22c *man/tech.Rd
 fd64e5247d76a5551943390869e59cf3 *src/RcppExports.cpp
 f9616785ce882342ae8c67165aff2815 *src/count_levels.cpp

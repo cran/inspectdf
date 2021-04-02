@@ -1,9 +1,14 @@
 
+# `inspectdf` 0.0.11
+
+-   Bug fixes to `inspect_types()` for pairwise comparison plots
+-   Updated tests for `inspect_types()` for pairwise comparisons
+
 # `inspectdf` 0.0.10
 
 -   Add `include_int` option in `inspect_cat()` to allow treatment of
     integer columns as categorical.
--   Improved p-values associated with categorical and numeric
+-   Improved p-values associated with binned categorical and numeric
     comparisons. This is now based on a modified chi-squared test and is
     labelled as `pval` in the resulting output.
 -   Fixed
@@ -13,7 +18,6 @@
     Verbelen](https://github.com/RoelVerbelen) for the report.
 -   Additional detail in `inspect_type()` comparison of two dataframes
     to make it easier to see which columns and types differ.
--   `ggfittext` moved to Suggests to support R versions prior to 3.6
 
 # `inspectdf` 0.0.9
 
