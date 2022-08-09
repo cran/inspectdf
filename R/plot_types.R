@@ -20,25 +20,27 @@
 #' @importFrom stats na.omit
 #' @importFrom utils head
 
-plot_types_1 <- function(
+plot_types_single <- function(
   df_plot, 
-  df_names, 
-  text_labels, 
-  col_palette, 
-  label_angle, 
-  label_color, 
-  label_size){
-  
+  text_labels = TRUE, 
+  col_palette = 0, 
+  label_angle = NULL, 
+  label_color = NULL, 
+  label_size = NULL, 
+  plot_type = 1
+){
+  df_names <- attr(df_plot, "df_names")
   # Get summary of the columns ready for radial plot
   column_layout <- df_plot %>%
     unnest(col_name) %>%
     select(-cnt, -pcnt) %>%
-    mutate(ones       = 1, 
-           tops       = cumsum(ones) / sum(ones), 
-           bottoms    = c(0, head(tops, n = -1)), 
-           label_pos  = (tops + bottoms) / 2, 
-           text_just  = ifelse(label_pos > 0.5, 'right', 'left'), 
-           text_rotn  = ifelse(label_pos > 0.5, -1, 1) * 90 - (label_pos * 360)) 
+    mutate(
+      ones       = 1, 
+      tops       = cumsum(ones) / sum(ones), 
+      bottoms    = c(0, head(tops, n = -1)), 
+      label_pos  = (tops + bottoms) / 2, 
+      text_just  = ifelse(label_pos > 0.5, 'right', 'left'), 
+      text_rotn  = ifelse(label_pos > 0.5, -1, 1) * 90 - (label_pos * 360)) 
   # Get summary of the column types ready for radial plot
   types_layout <- 
     column_layout %>%
@@ -52,13 +54,16 @@ plot_types_1 <- function(
       label_pos  = (tops + bottoms) / 2, 
       text_just  = ifelse(label_pos > 0.5, 'center', 'center'), 
       text_rotn  = ifelse(label_pos > 0.5, -1, 1) * 90 - (label_pos * 360), 
-      type_label = ifelse(label_pos > 0.5, paste0(type, ' (', n, ')'), paste0('(', n, ') ', type))
+      type_label = ifelse(label_pos > 0.5, paste0(type, ' (', n, ')'), 
+                          paste0('(', n, ') ', type))
     )
   # Generate radial plot
   plt <- column_layout %>%
     ggplot(aes(ymax = tops, ymin = bottoms, xmax = 4, xmin = 3, fill = type)) +
     geom_rect() +
-    geom_rect(aes(ymax = tops, ymin = bottoms, xmax = 3, xmin = -1, fill = type), alpha = 0.7) +
+    geom_rect(
+      aes(ymax = tops, ymin = bottoms, xmax = 3, xmin = -1, fill = type), 
+      alpha = 0.7) +
     geom_text(x = 5, 
               aes(y = label_pos, label = col_name, color = type, 
                   hjust = text_just, angle = text_rotn), size = 4) + 
@@ -77,9 +82,16 @@ plot_types_1 <- function(
   plt
 }
 
-plot_types_2 <- function(df_plot, df_names, text_labels, col_palette, 
-                         label_angle, label_color, label_size, plot_type){
-  
+plot_types_pair <- function(
+    df_plot, 
+    text_labels = TRUE, 
+    col_palette = 0, 
+    label_angle = NULL, 
+    label_color = NULL, 
+    label_size = NULL, 
+    plot_type = 1
+){
+  df_names <- attr(df_plot, "df_names")
   # Get summary of the columns ready for radial plot
   column_list <- 
     df_plot %>%
@@ -92,7 +104,11 @@ plot_types_2 <- function(df_plot, df_names, text_labels, col_palette,
   
   # Join column names and types across the pair of inputs
   column_layout <- 
-    full_join(x = column_list[[df_names[[1]]]], y = column_list[[df_names[[2]]]], by = c('col_name')) 
+    full_join(
+      column_list[[df_names[[1]]]], 
+      column_list[[df_names[[2]]]], 
+      by = c('col_name')
+    ) 
   
   # filter out non-issues if plottype != 1
   if(plot_type != 1) {
