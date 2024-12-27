@@ -1,4 +1,4 @@
-110a9536aa9d78b945bb18d8483e1432 *DESCRIPTION
+05c12fc303b79c4176ae89e4c093d094 *DESCRIPTION
 2fd09e91bc249435b813718dd10bff3d *NAMESPACE
 2cfa91ed72410104696a9537e64bda68 *NEWS.md
 31e3728fe4b6ff4f70acd0c257a81fa7 *R/RcppExports.R
@@ -41,7 +41,7 @@ bba6502a6348dd57cd2cf18f89130374 *R/sumna.R
 63300a08cc1ccdda6d9e23523dd82a26 *R/tech-data.R
 3474f15c05c4019691e5a1dd6e7d8895 *R/vec_to_tibble.R
 f8f1c455bea9e332a854c3f6f68b2947 *R/zzz.R
-cd38dce7cef70b74e122e127b5cb01d6 *data/tech.rda
+0d69cfaf597d2af92561fb32c80fade7 *data/tech.rda
 847a305cbdd35d2aebfa497d444768c9 *man/figures/logo.png
 81c344d03e3e87306a13e31b6636a2f0 *man/inspect_cat.Rd
 5bdfaaa3644c2a20a50cc2f5c0fb6e76 *man/inspect_cor.Rd
